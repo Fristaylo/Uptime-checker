@@ -1,11 +1,14 @@
 .pingDashboard {
   margin: 20px;
   padding: 20px;
-  border: 1px solid #ccc;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border: 1px solid #333;
   border-radius: 5px;
 
   h2 {
     margin-top: 0;
+    color: #fff;
   }
 
   table {
@@ -13,21 +16,22 @@
     border-collapse: collapse;
 
     th, td {
-      border: 1px solid #ddd;
+      border: 1px solid #333;
       padding: 8px;
-    }
-
-    th {
-      background-color: #f2f2f2;
       text-align: left;
     }
 
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
+    th {
+      background-color: #333;
+      color: #fff;
+    }
+
+    tr {
+      background-color: #2a2a2a;
     }
 
     tr:hover {
-      background-color: #f1f1f1;
+      background-color: #444;
     }
   }
 }

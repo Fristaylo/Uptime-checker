@@ -46,7 +46,7 @@ app.get("/logs", async (req, res) => {
 });
 
 app.post("/ping", async (req, res) => {
-  const { target } = req.body;
+  const { target, countries } = req.body;
   const apiKey = process.env.GLOBALPING_API_KEY;
 
   if (!target) {
@@ -60,10 +60,11 @@ app.post("/ping", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           target,
-          limit: 1,
+          locations: countries.map(country => ({ country, limit: 1 })),
           type: "ping",
         }),
       }
@@ -98,39 +99,39 @@ app.post("/ping", async (req, res) => {
       "Result from Globalping API:",
       JSON.stringify(resultData, null, 2)
     );
-    const result = resultData.results[0]; // Get the first result from the array
+    for (const result of resultData.results) {
+      // Step 4: Save to database
+      const { probe, result: pingResult } = result; // Destructure for easier access
+      const { stats } = pingResult;
 
-    // Step 4: Save to database
-    const { probe, result: pingResult } = result; // Destructure for easier access
-    const { stats } = pingResult;
+      // Step 4: Save to database
+      const values = [
+        id, // Use measurement id as probe_id
+        probe.country,
+        probe.city,
+        probe.asn,
+        probe.network,
+        stats.total, // packetsSent
+        stats.rcv, // packetsReceived
+        stats.loss, // packetLoss
+        stats.min, // rttMin
+        stats.max, // rttMax
+        stats.avg, // rttAvg
+        stats.mdev || 0, // rttMdev (sometimes null)
+      ];
 
-    // Step 4: Save to database
-    const values = [
-      id, // Use measurement id as probe_id
-      probe.country,
-      probe.city,
-      probe.asn,
-      probe.network,
-      stats.total, // packetsSent
-      stats.rcv, // packetsReceived
-      stats.loss, // packetLoss
-      stats.min, // rttMin
-      stats.max, // rttMax
-      stats.avg, // rttAvg
-      stats.mdev || 0, // rttMdev (sometimes null)
-    ];
+      console.log("Saving the following values to DB:", values);
 
-    console.log("Saving the following values to DB:", values);
+      const query = `
+      INSERT INTO ping_logs (
+        probe_id, country, city, asn, network, packets_sent, packets_received,
+        packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `;
 
-    const query = `
-    INSERT INTO ping_logs (
-      probe_id, country, city, asn, network, packets_sent, packets_received,
-      packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-  `;
-
-    await pool.query(query, values);
-    console.log("Successfully saved to DB.");
+      await pool.query(query, values);
+      console.log(`Successfully saved log for ${probe.country} to DB.`);
+    }
     res.status(201).send("Ping successful and log saved");
   } catch (err) {
     console.error(err);

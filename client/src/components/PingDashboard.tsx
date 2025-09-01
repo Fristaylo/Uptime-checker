@@ -23,6 +23,8 @@ const PingDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const countries = ['RU', 'UA', 'LV', 'LT', 'EE', 'KZ'];
+
   const fetchLogs = async () => {
     try {
       const response = await fetch('/logs');
@@ -45,7 +47,7 @@ const PingDashboard = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ target: 'site.yummyani.me' }),
+        body: JSON.stringify({ target: 'site.yummyani.me', countries }),
       });
 
       if (!response.ok) {
