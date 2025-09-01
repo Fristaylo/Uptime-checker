@@ -43,9 +43,8 @@ jobs:
             sudo systemctl stop nginx || true
             sudo systemctl disable nginx || true
             # Pull the latest image
-            docker pull ${{ secrets.DOCKER_USERNAME }}/uptime-checker:latest
+            docker-compose pull
             # Stop and remove the old container
-            docker stop uptime-checker || true
-            docker rm uptime-checker || true
+            docker-compose down
             # Run the new container
-            docker run -d --name uptime-checker -p 80:80 -p 5432:5432 ${{ secrets.DOCKER_USERNAME }}/uptime-checker:latest
+            docker-compose up -d
