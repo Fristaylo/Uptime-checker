@@ -1,5 +1,5 @@
 # Stage 1: Build the client
-FROM node:18-alpine AS client-builder
+FROM node:20-alpine AS client-builder
 WORKDIR /app/client
 COPY client/package.json client/package-lock.json ./
 RUN npm install
@@ -9,14 +9,14 @@ ENV VITE_GLOBALPING_API_KEY=$VITE_GLOBALPING_API_KEY
 RUN npm run build
 
 # Stage 2: Build the server
-FROM node:18-alpine AS server-builder
+FROM node:20-alpine AS server-builder
 WORKDIR /app/server
 COPY server/package.json server/package-lock.json ./
 RUN npm install
 COPY server/ ./
 
 # Stage 3: Final image
-FROM node:18-alpine
+FROM node:20-alpine
 RUN apk add --no-cache nginx
 WORKDIR /app
 COPY --from=server-builder /app/server ./server

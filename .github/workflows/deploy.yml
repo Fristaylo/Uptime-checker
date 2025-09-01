@@ -49,9 +49,10 @@ jobs:
             # Stop and disable system nginx if it exists
             sudo systemctl stop nginx || true
             sudo systemctl disable nginx || true
+            # Stop and remove all containers
+            docker stop $(docker ps -a -q) || true
+            docker rm $(docker ps -a -q) || true
             # Pull the latest image
             docker-compose pull
-            # Stop and remove the old container
-            docker-compose down
             # Run the new container
             docker-compose up -d
