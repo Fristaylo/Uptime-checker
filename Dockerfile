@@ -17,11 +17,19 @@ COPY server/ ./
 
 # Stage 3: Final image
 FROM node:18-alpine
-RUN apk add --no-cache nginx
+RUN apk add --no-cache nginx postgresql
 WORKDIR /app
 COPY --from=server-builder /app/server ./server
 COPY --from=client-builder /app/client/dist ./client/dist
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY init-db.sh /docker-entrypoint-initdb.d/init-db.sh
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+RUN chmod +x /start.sh /docker-entrypoint-initdb.d/init-db.sh
+
+# PostgreSQL setup
+RUN mkdir -p /var/lib/postgresql/data && chown -R postgres:postgres /var/lib/postgresql/data
+USER postgres
+RUN initdb -D /var/lib/postgresql/data
+USER root
+
 CMD ["/start.sh"]
