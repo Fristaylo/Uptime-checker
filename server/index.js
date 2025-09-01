@@ -60,7 +60,6 @@ app.post("/ping", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           target,
@@ -103,7 +102,7 @@ app.post("/ping", async (req, res) => {
 
     // Step 4: Save to database
     const values = [
-      probe.id,
+      id, // Use measurement id as probe_id
       probe.country,
       probe.city,
       probe.asn,
