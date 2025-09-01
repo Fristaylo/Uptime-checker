@@ -69,14 +69,9 @@ app.post('/ping', async (req, res) => {
     }
 
     const data = await response.json();
-    const result = data.results;
+    console.log('Response from Globalping API:', JSON.stringify(data, null, 2));
+    const result = data.results[0]; // Get the first result from the array
 
-    const query = `
-      INSERT INTO ping_logs (
-        probe_id, country, city, asn, network, packets_sent, packets_received,
-        packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    `;
     const values = [
       result.probe.id,
       result.probe.location.country,
@@ -92,7 +87,16 @@ app.post('/ping', async (req, res) => {
       result.stats.rtt.mdev,
     ];
 
+    console.log('Saving the following values to DB:', values);
+
+    const query = `
+      INSERT INTO ping_logs (
+        probe_id, country, city, asn, network, packets_sent, packets_received,
+        packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `;
     await pool.query(query, values);
+    console.log('Successfully saved to DB.');
     res.status(201).send('Ping successful and log saved');
   } catch (err) {
     console.error(err);
