@@ -37,6 +37,9 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
+            # Stop and disable system nginx if it exists
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
             # Pull the latest image
             docker pull ${{ secrets.DOCKER_USERNAME }}/uptime-checker:latest
             # Stop and remove the old container
