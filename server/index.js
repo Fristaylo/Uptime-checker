@@ -1,6 +1,6 @@
-const express = require('express');
-const pool = require('./db');
-const fetch = require('node-fetch');
+const express = require("express");
+const pool = require("./db");
+const fetch = require("node-fetch");
 const app = express();
 const port = 3000;
 
@@ -29,95 +29,110 @@ const createTable = async () => {
     await pool.query(query);
     console.log('Table "ping_logs" created or already exists.');
   } catch (err) {
-    console.error('Error creating table', err);
+    console.error("Error creating table", err);
   }
 };
 
-app.get('/logs', async (req, res) => {
+app.get("/logs", async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM ping_logs WHERE created_at >= NOW() - interval \'1 day\' ORDER BY created_at DESC');
+    const { rows } = await pool.query(
+      "SELECT * FROM ping_logs WHERE created_at >= NOW() - interval '1 day' ORDER BY created_at DESC"
+    );
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).send("Server Error");
   }
 });
 
-app.post('/ping', async (req, res) => {
+app.post("/ping", async (req, res) => {
   const { target } = req.body;
   const apiKey = process.env.GLOBALPING_API_KEY;
 
   if (!target) {
-    return res.status(400).send('Target is required');
+    return res.status(400).send("Target is required");
   }
-try {
-  // Step 1: Create the measurement
-  const createMeasurementResponse = await fetch('https://api.globalping.io/v1/measurements', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      target,
-      limit: 1,
-      type: 'ping',
-    }),
-  });
+  try {
+    // Step 1: Create the measurement
+    const createMeasurementResponse = await fetch(
+      "https://api.globalping.io/v1/measurements",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          target,
+          limit: 1,
+          type: "ping",
+        }),
+      }
+    );
 
-  if (!createMeasurementResponse.ok) {
-    throw new Error(`HTTP error! status: ${createMeasurementResponse.status}`);
-  }
+    if (!createMeasurementResponse.ok) {
+      throw new Error(
+        `HTTP error! status: ${createMeasurementResponse.status}`
+      );
+    }
 
-  const { id } = await createMeasurementResponse.json();
-  console.log(`Measurement created with ID: ${id}`);
+    const { id } = await createMeasurementResponse.json();
+    console.log(`Measurement created with ID: ${id}`);
 
-  // Step 2: Wait a few seconds for the measurement to complete
-  await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds delay
+    // Step 2: Wait a few seconds for the measurement to complete
+    await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds delay
 
-  // Step 3: Fetch the results
-  const getResultResponse = await fetch(`https://api.globalping.io/v1/measurements/${id}`);
-  if (!getResultResponse.ok) {
-    throw new Error(`HTTP error! status: ${getResultResponse.status}`);
-  }
+    // Step 3: Fetch the results
+    const getResultResponse = await fetch(
+      `https://api.globalping.io/v1/measurements/${id}`
+    );
+    if (!getResultResponse.ok) {
+      throw new Error(`HTTP error! status: ${getResultResponse.status}`);
+    }
 
-  const resultData = await getResultResponse.json();
-  console.log('Result from Globalping API:', JSON.stringify(resultData, null, 2));
-  const result = resultData.results; // Get the first result from the array
+    const resultData = await getResultResponse.json();
+    console.log(
+      "Result from Globalping API:",
+      JSON.stringify(resultData, null, 2)
+    );
+    const result = resultData.results[0]; // Get the first result from the array
 
-  // Step 4: Save to database
-  const values = [
-    result.probe.id,
-    result.probe.location.country,
-    result.probe.location.city,
-    result.probe.location.asn,
-    result.probe.location.network,
-    result.result.stats.total, // packetsSent
-    result.result.stats.rcv, // packetsReceived
-    result.result.stats.loss, // packetLoss
-    result.result.stats.min, // rttMin
-    result.result.stats.max, // rttMax
-    result.result.stats.avg, // rttAvg
-    result.result.stats.mdev || 0, // rttMdev (sometimes null)
-  ];
+    // Step 4: Save to database
+    const { probe, result: pingResult } = result; // Destructure for easier access
+    const { stats } = pingResult;
 
-  console.log('Saving the following values to DB:', values);
+    // Step 4: Save to database
+    const values = [
+      probe.id,
+      probe.location.country,
+      probe.location.city,
+      probe.location.asn,
+      probe.location.network,
+      stats.total, // packetsSent
+      stats.rcv, // packetsReceived
+      stats.loss, // packetLoss
+      stats.min, // rttMin
+      stats.max, // rttMax
+      stats.avg, // rttAvg
+      stats.mdev || 0, // rttMdev (sometimes null)
+    ];
 
-  const query = `
+    console.log("Saving the following values to DB:", values);
+
+    const query = `
     INSERT INTO ping_logs (
       probe_id, country, city, asn, network, packets_sent, packets_received,
       packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
   `;
 
-  await pool.query(query, values);
-  console.log('Successfully saved to DB.');
-  res.status(201).send('Ping successful and log saved');
-
-} catch (err) {
-  console.error(err);
-  res.status(500).send('Server Error');
-}
+    await pool.query(query, values);
+    console.log("Successfully saved to DB.");
+    res.status(201).send("Ping successful and log saved");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server Error");
+  }
 });
 
 app.listen(port, () => {
