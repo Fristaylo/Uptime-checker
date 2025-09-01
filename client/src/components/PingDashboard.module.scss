@@ -3,35 +3,47 @@
   padding: 20px;
   background-color: #1e1e1e;
   color: #d4d4d4;
-  border: 1px solid #333;
   border-radius: 5px;
 
   h2 {
     margin-top: 0;
     color: #fff;
+    margin-bottom: 20px;
   }
+}
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
+.countryRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
-    th, td {
-      border: 1px solid #333;
-      padding: 8px;
-      text-align: left;
-    }
+.countryName {
+  width: 50px;
+  font-weight: bold;
+}
 
-    th {
-      background-color: #333;
-      color: #fff;
-    }
+.pingSquares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
-    tr {
-      background-color: #2a2a2a;
-    }
+.pingSquare {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  cursor: pointer;
+}
 
-    tr:hover {
-      background-color: #444;
-    }
-  }
+.green {
+  background-color: #28a745;
+}
+
+.yellow {
+  background-color: #ffc107;
+}
+
+.red {
+  background-color: #dc3545;
 }

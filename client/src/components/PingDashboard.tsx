@@ -19,7 +19,7 @@ interface PingLog {
 }
 
 const PingDashboard = () => {
-  const [logs, setLogs] = useState<PingLog[]>([]);
+  const [logsByCountry, setLogsByCountry] = useState<Record<string, PingLog[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +31,18 @@ const PingDashboard = () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      setLogs(data);
+      const data: PingLog[] = await response.json();
+      
+      const groupedLogs = data.reduce((acc, log) => {
+        const country = log.country;
+        if (!acc[country]) {
+          acc[country] = [];
+        }
+        acc[country].push(log);
+        return acc;
+      }, {} as Record<string, PingLog[]>);
+
+      setLogsByCountry(groupedLogs);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -55,7 +65,7 @@ const PingDashboard = () => {
       }
 
       // Ping was successful, now refresh the logs
-      fetchLogs();
+      setTimeout(fetchLogs, 5000); // Wait 5 seconds for logs to update
     } catch (e: any) {
       setError(e.message);
     }
@@ -69,40 +79,32 @@ const PingDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const getStatusColor = (packetLoss: number) => {
+    if (packetLoss === 0) return styles.green;
+    if (packetLoss > 0 && packetLoss < 100) return styles.yellow;
+    return styles.red;
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className={styles.pingDashboard}>
-      <h2>Ping Logs (Last 24 hours)</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Country</th>
-            <th>City</th>
-            <th>Network</th>
-            <th>Packet Loss (%)</th>
-            <th>Min RTT (ms)</th>
-            <th>Avg RTT (ms)</th>
-            <th>Max RTT (ms)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log) => (
-            <tr key={log.id}>
-              <td>{new Date(log.created_at).toLocaleString()}</td>
-              <td>{log.country}</td>
-              <td>{log.city}</td>
-              <td>{log.network}</td>
-              <td>{log.packet_loss}</td>
-              <td>{log.rtt_min}</td>
-              <td>{log.rtt_avg}</td>
-              <td>{log.rtt_max}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <h2>Статус yummyani.me</h2>
+      {Object.entries(logsByCountry).map(([country, logs]) => (
+        <div key={country} className={styles.countryRow}>
+          <span className={styles.countryName}>{country}</span>
+          <div className={styles.pingSquares}>
+            {logs.slice(0, 50).reverse().map((log) => (
+              <div
+                key={log.id}
+                className={`${styles.pingSquare} ${getStatusColor(log.packet_loss)}`}
+                title={`City: ${log.city}\nNetwork: ${log.network}\nPacket Loss: ${log.packet_loss}%\nAvg RTT: ${log.rtt_avg}ms`}
+              ></div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
