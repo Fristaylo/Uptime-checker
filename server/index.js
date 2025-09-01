@@ -83,7 +83,7 @@ try {
 
   const resultData = await getResultResponse.json();
   console.log('Result from Globalping API:', JSON.stringify(resultData, null, 2));
-  const result = resultData.results;
+  const result = resultData.results; // Get the first result from the array
 
   // Step 4: Save to database
   const values = [
@@ -92,13 +92,13 @@ try {
     result.probe.location.city,
     result.probe.location.asn,
     result.probe.location.network,
-    result.stats.packetsSent,
-    result.stats.packetsReceived,
-    result.stats.packetLoss,
-    result.stats.rtt.min,
-    result.stats.rtt.max,
-    result.stats.rtt.avg,
-    result.stats.rtt.mdev,
+    result.result.stats.total, // packetsSent
+    result.result.stats.rcv, // packetsReceived
+    result.result.stats.loss, // packetLoss
+    result.result.stats.min, // rttMin
+    result.result.stats.max, // rttMax
+    result.result.stats.avg, // rttAvg
+    result.result.stats.mdev || 0, // rttMdev (sometimes null)
   ];
 
   console.log('Saving the following values to DB:', values);
