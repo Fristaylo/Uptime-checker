@@ -1,0 +1,12 @@
+{
+  "name": "uptime-checker-server",
+  "version": "1.0.0",
+  "description": "Backend for the uptime checker application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
