@@ -70,9 +70,13 @@ app.post("/ping", async (req, res) => {
     );
 
     if (!createMeasurementResponse.ok) {
-      throw new Error(
-        `HTTP error! status: ${createMeasurementResponse.status}`
+      console.error(
+        `Failed to create measurement: ${createMeasurementResponse.status} ${createMeasurementResponse.statusText}`
       );
+      const errorBody = await createMeasurementResponse.text();
+      console.error(`Error body: ${errorBody}`);
+      res.status(500).send("Failed to create measurement");
+      return;
     }
 
     const { id } = await createMeasurementResponse.json();
