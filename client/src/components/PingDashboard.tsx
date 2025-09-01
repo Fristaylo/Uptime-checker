@@ -38,53 +38,22 @@ const PingDashboard = () => {
     }
   };
 
-  const fetchAndSavePings = async () => {
+  const triggerPing = async () => {
     try {
-      const response = await fetch('https://api.globalping.io/v1/measurements', {
+      const response = await fetch('/ping', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_GLOBALPING_API_KEY}`,
         },
-        body: JSON.stringify({
-          "locations": ["RU", "UA", "LV", "LT", "EE", "KZ"],
-          "limit": 6,
-          "type": "ping",
-          "target": "site.yummyani.me",
-          "measurementOptions": {
-            "packets": 3
-          }
-        }),
+        body: JSON.stringify({ target: 'site.yummyani.me' }),
       });
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
 
-      for (const result of data.results) {
-        const log = {
-          probeId: result.probe.id,
-          country: result.probe.location.country,
-          city: result.probe.location.city,
-          asn: result.probe.location.asn,
-          network: result.probe.location.network,
-          packetsSent: result.stats.sent,
-          packetsReceived: result.stats.received,
-          packetLoss: result.stats.loss,
-          rttMin: result.stats.rtt.min,
-          rttMax: result.stats.rtt.max,
-          rttAvg: result.stats.rtt.avg,
-          rttMdev: result.stats.rtt.mdev,
-        };
-        await fetch('/logs', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(log),
-        });
-      }
-      fetchLogs(); // Refresh logs after saving new ones
+      // Ping was successful, now refresh the logs
+      fetchLogs();
     } catch (e: any) {
       setError(e.message);
     }
@@ -92,8 +61,8 @@ const PingDashboard = () => {
 
   useEffect(() => {
     fetchLogs();
-    fetchAndSavePings();
-    const interval = setInterval(fetchAndSavePings, 60000); // 1 minute
+    triggerPing();
+    const interval = setInterval(triggerPing, 60000); // 1 minute
 
     return () => clearInterval(interval);
   }, []);

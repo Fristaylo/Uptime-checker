@@ -1,5 +1,6 @@
 const express = require('express');
 const pool = require('./db');
+const fetch = require('node-fetch');
 const app = express();
 const port = 3000;
 
@@ -42,36 +43,57 @@ app.get('/logs', async (req, res) => {
   }
 });
 
-app.post('/logs', async (req, res) => {
-  const {
-    probeId,
-    country,
-    city,
-    asn,
-    network,
-    packetsSent,
-    packetsReceived,
-    packetLoss,
-    rttMin,
-    rttMax,
-    rttAvg,
-    rttMdev,
-  } = req.body;
+app.post('/ping', async (req, res) => {
+  const { target } = req.body;
+  const apiKey = process.env.GLOBALPING_API_KEY;
 
-  const query = `
-    INSERT INTO ping_logs (
-      probe_id, country, city, asn, network, packets_sent, packets_received,
-      packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-  `;
-  const values = [
-    probeId, country, city, asn, network, packetsSent, packetsReceived,
-    packetLoss, rttMin, rttMax, rttAvg, rttMdev,
-  ];
+  if (!target) {
+    return res.status(400).send('Target is required');
+  }
 
   try {
+    const response = await fetch('https://api.globalping.io/v1/ping', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        target,
+        limit: 1,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const result = data.results;
+
+    const query = `
+      INSERT INTO ping_logs (
+        probe_id, country, city, asn, network, packets_sent, packets_received,
+        packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `;
+    const values = [
+      result.probe.id,
+      result.probe.location.country,
+      result.probe.location.city,
+      result.probe.location.asn,
+      result.probe.location.network,
+      result.stats.packetsSent,
+      result.stats.packetsReceived,
+      result.stats.packetLoss,
+      result.stats.rtt.min,
+      result.stats.rtt.max,
+      result.stats.rtt.avg,
+      result.stats.rtt.mdev,
+    ];
+
     await pool.query(query, values);
-    res.status(201).send('Log saved');
+    res.status(201).send('Ping successful and log saved');
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
