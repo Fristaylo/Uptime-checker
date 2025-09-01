@@ -30,6 +30,10 @@ RUN chmod +x /start.sh /docker-entrypoint-initdb.d/init-db.sh
 RUN mkdir -p /var/lib/postgresql/data && chown -R postgres:postgres /var/lib/postgresql/data
 USER postgres
 RUN initdb -D /var/lib/postgresql/data
+RUN echo "listen_addresses = '*'" >> /var/lib/postgresql/data/postgresql.conf
+RUN echo "host all all 0.0.0.0/0 md5" >> /var/lib/postgresql/data/pg_hba.conf
 USER root
 
 CMD ["/start.sh"]
+
+EXPOSE 5432
