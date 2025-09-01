@@ -52,7 +52,7 @@ app.post('/ping', async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.globalping.io/v1/ping', {
+    const response = await fetch('https://api.globalping.io/v1/measurements', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,6 +61,7 @@ app.post('/ping', async (req, res) => {
       body: JSON.stringify({
         target,
         limit: 1,
+        type: 'ping',
       }),
     });
 
