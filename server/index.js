@@ -104,10 +104,10 @@ app.post("/ping", async (req, res) => {
     // Step 4: Save to database
     const values = [
       probe.id,
-      probe.location.country,
-      probe.location.city,
-      probe.location.asn,
-      probe.location.network,
+      probe.country,
+      probe.city,
+      probe.asn,
+      probe.network,
       stats.total, // packetsSent
       stats.rcv, // packetsReceived
       stats.loss, // packetLoss
