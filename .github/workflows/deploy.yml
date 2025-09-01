@@ -20,4 +20,16 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
-            echo "Hello, World! Deployment is working!"
+            # Update package lists
+            sudo apt-get update
+            # Install Nginx
+            sudo apt-get install -y nginx
+            # Install Node.js (we'll use nvm for version management)
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+            nvm install --lts
+            # Install PM2
+            npm install pm2 -g
+            echo "Server setup complete!"
