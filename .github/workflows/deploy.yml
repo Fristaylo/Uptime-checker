@@ -57,4 +57,4 @@ jobs:
             # Pull the latest image
             docker-compose pull
             # Run the new container
-            docker-compose up -d
+            docker-compose up -d --build
