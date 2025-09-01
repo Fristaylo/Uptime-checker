@@ -24,6 +24,8 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/uptime-checker:latest
+          build-args: |
+            VITE_GLOBALPING_API_KEY=${{ secrets.VITE_GLOBALPING_API_KEY }}
 
   deploy:
     needs: build-and-push
