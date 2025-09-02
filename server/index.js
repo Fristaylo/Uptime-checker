@@ -6,14 +6,6 @@ const port = 3000;
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self';"
-  );
-  next();
-});
-
 const createTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS ping_logs (
@@ -60,13 +52,15 @@ app.get("/logs", async (req, res) => {
   }
 });
 
-const performPingCycle = async () => {
-  const target = 'site.yummyani.me';
-  const countries = ['RU', 'UA', 'LV', 'LT', 'EE', 'KZ'];
+app.post("/ping", async (req, res) => {
+  const { target, countries } = req.body;
   const apiKey = process.env.GLOBALPING_API_KEY;
-  console.log(`[${new Date().toISOString()}] Starting new ping cycle...`);
 
+  if (!target) {
+    return res.status(400).send("Target is required");
+  }
   try {
+    // Step 1: Create the measurement
     const createMeasurementResponse = await fetch(
       "https://api.globalping.io/v1/measurements",
       {
@@ -77,7 +71,7 @@ const performPingCycle = async () => {
         },
         body: JSON.stringify({
           target,
-          locations: countries.map(country => ({ country, limit: 1 })),
+          locations: countries.map((country) => ({ country, limit: 1 })),
           type: "ping",
         }),
       }
@@ -85,32 +79,54 @@ const performPingCycle = async () => {
 
     if (!createMeasurementResponse.ok) {
       const errorBody = await createMeasurementResponse.text();
-      throw new Error(
+      console.error(
         `Failed to create measurement: ${createMeasurementResponse.status} ${createMeasurementResponse.statusText}. Body: ${errorBody}`
       );
+      // Send a non-fatal response to the client so the UI doesn't break
+      res
+        .status(200)
+        .json({ message: "Failed to create measurement, server will retry." });
+      return;
     }
 
     const { id } = await createMeasurementResponse.json();
     console.log(`Measurement created with ID: ${id}`);
 
+    // Step 2: Wait a few seconds for the measurement to complete
+    // Step 2 & 3: Poll for the measurement result until it's finished
     let resultData;
     const startTime = Date.now();
-    const timeout = 30000;
+    const timeout = 30000; // 30 seconds timeout
 
     while (Date.now() - startTime < timeout) {
       const getResultResponse = await fetch(
         `https://api.globalping.io/v1/measurements/${id}`
       );
-      if (getResultResponse.ok) {
-        resultData = await getResultResponse.json();
-        if (resultData.status === 'finished') {
-          break;
+
+      if (!getResultResponse.ok) {
+        // If the API returns a server error, wait and retry. Otherwise, fail immediately.
+        if (getResultResponse.status >= 500) {
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+          continue;
         }
+        throw new Error(`HTTP error! status: ${getResultResponse.status}`);
       }
-      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      resultData = await getResultResponse.json();
+
+      if (resultData.status === "finished") {
+        break; // Exit loop if measurement is finished
+      }
+
+      // Wait for 2 seconds before polling again
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
+    if (!resultData || resultData.status !== "finished") {
+      throw new Error(`Measurement ${id} did not complete in time.`);
+    }
     if (!resultData) {
+      // This can happen if the API call fails consistently.
       throw new Error(`Could not retrieve measurement ${id}.`);
     }
 
@@ -118,31 +134,66 @@ const performPingCycle = async () => {
       const { probe, result: pingResult } = result;
       let values;
 
-      if (pingResult.status === 'finished' && pingResult.stats) {
+      if (pingResult.status === "finished" && pingResult.stats) {
         const { stats } = pingResult;
-        values = [id, probe.country, probe.city, probe.asn, probe.network, stats.total, stats.rcv, stats.loss, stats.min, stats.max, stats.avg, stats.mdev || 0];
+        values = [
+          id,
+          probe.country,
+          probe.city,
+          probe.asn,
+          probe.network,
+          stats.total,
+          stats.rcv,
+          stats.loss,
+          stats.min,
+          stats.max,
+          stats.avg,
+          stats.mdev || 0,
+        ];
       } else {
-        console.log(`Probe for ${probe.country} has status: '${pingResult.status}'. Logging as 100% packet loss.`);
-        values = [id, probe.country, probe.city, probe.asn, probe.network, 3, 0, 100, null, null, null, null];
+        // If the probe failed or is not finished, log it as 100% packet loss
+        console.log(
+          `Probe for ${probe.country} has status: '${pingResult.status}'. Logging as 100% packet loss.`
+        );
+        values = [
+          id,
+          probe.country,
+          probe.city,
+          probe.asn,
+          probe.network,
+          3, // packetsSent (assumed)
+          0, // packetsReceived
+          100, // packetLoss
+          null, // rttMin
+          null, // rttMax
+          null, // rttAvg
+          null, // rttMdev
+        ];
       }
 
+      console.log("Saving the following values to DB:", values);
+
       const query = `
-        INSERT INTO ping_logs (probe_id, country, city, asn, network, packets_sent, packets_received, packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      `;
+      INSERT INTO ping_logs (
+        probe_id, country, city, asn, network, packets_sent, packets_received,
+        packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `;
+
       await pool.query(query, values);
+      console.log(`Successfully saved log for ${probe.country} to DB.`);
     }
-    console.log(`[${new Date().toISOString()}] Ping cycle completed successfully.`);
+    res.status(201).json({ message: "Ping measurement processed" });
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] Ping cycle failed:`, err.message);
+    console.error("Failed to complete ping measurement cycle:", err.message);
+    // We send a 200 OK response so the frontend doesn't show a fatal error.
+    // The frontend will simply fetch the existing logs again on its next interval.
+    // The actual error is logged on the server for debugging.
+    res.status(200).json({ message: "Ping cycle failed, server will retry." });
   }
-};
+});
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
   createTable();
-  
-  // Run the cycle once on startup, then set an interval.
-  performPingCycle();
-  setInterval(performPingCycle, 120000); // 2 minutes
 });

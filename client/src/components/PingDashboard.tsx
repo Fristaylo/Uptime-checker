@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import styles from './PingDashboard.module.scss';
-import CountryChart from './CountryChart';
+import { useState, useEffect } from "react";
+import styles from "./PingDashboard.module.scss";
+import CountryChart from "./CountryChart";
 
 interface PingLog {
   rtt_avg: number;
@@ -9,13 +9,17 @@ interface PingLog {
 }
 
 const PingDashboard = () => {
-  const [logsByCountry, setLogsByCountry] = useState<Record<string, PingLog[]>>({});
+  const [logsByCountry, setLogsByCountry] = useState<Record<string, PingLog[]>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const countries = ["RU", "UA", "LV", "LT", "EE", "KZ"];
+
   const fetchLogs = async () => {
     try {
-      const response = await fetch('/logs');
+      const response = await fetch("/logs");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -28,15 +32,53 @@ const PingDashboard = () => {
     }
   };
 
+  const triggerPing = async () => {
+    console.log(`[${new Date().toLocaleTimeString()}] Triggering ping...`);
+    try {
+      const response = await fetch("/ping", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ target: "site.yummyani.me", countries }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log(
+        `[${new Date().toLocaleTimeString()}] Ping request successful.`
+      );
+    } catch (e: any) {
+      setError(e.message);
+      console.error(
+        `[${new Date().toLocaleTimeString()}] Error in triggerPing:`,
+        e
+      );
+    }
+  };
+
   useEffect(() => {
-    // Fetch logs immediately on component mount
-    fetchLogs();
+    const runCycle = async () => {
+      await triggerPing();
+      // Wait for measurement to be processed before fetching
+      await new Promise((resolve) => setTimeout(resolve, 7000));
+      await fetchLogs();
+    };
 
-    // Then set up an interval to fetch logs every minute
-    const interval = setInterval(fetchLogs, 60000); // 1 minute
+    // Run once immediately on component mount
+    runCycle();
 
-    // Clean up the interval when the component unmounts
-    return () => clearInterval(interval);
+    // Then set up the interval for subsequent runs
+    const interval = setInterval(runCycle, 120000); // 2 minutes
+    console.log(
+      `[${new Date().toLocaleTimeString()}] Interval set for 2 minutes.`
+    );
+
+    return () => {
+      clearInterval(interval);
+      console.log(`[${new Date().toLocaleTimeString()}] Interval cleared.`);
+    };
   }, []);
 
   if (loading) return <div>Loading...</div>;
