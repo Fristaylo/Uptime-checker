@@ -35,10 +35,17 @@ const createTable = async () => {
 
 app.get("/logs", async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      "SELECT * FROM ping_logs WHERE created_at >= NOW() - interval '1 day' ORDER BY created_at DESC"
-    );
-    res.json(rows);
+    const { rows } = await pool.query(`
+      SELECT country, json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
+      FROM ping_logs
+      WHERE created_at >= NOW() - interval '1 day'
+      GROUP BY country;
+    `);
+    const logsByCountry = rows.reduce((acc, row) => {
+      acc[row.country] = row.logs;
+      return acc;
+    }, {});
+    res.json(logsByCountry);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
@@ -84,17 +91,38 @@ app.post("/ping", async (req, res) => {
     console.log(`Measurement created with ID: ${id}`);
 
     // Step 2: Wait a few seconds for the measurement to complete
-    await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds delay
+    // Step 2 & 3: Poll for the measurement result until it's finished
+    let resultData;
+    const startTime = Date.now();
+    const timeout = 30000; // 30 seconds timeout
 
-    // Step 3: Fetch the results
-    const getResultResponse = await fetch(
-      `https://api.globalping.io/v1/measurements/${id}`
-    );
-    if (!getResultResponse.ok) {
-      throw new Error(`HTTP error! status: ${getResultResponse.status}`);
+    while (Date.now() - startTime < timeout) {
+      const getResultResponse = await fetch(
+        `https://api.globalping.io/v1/measurements/${id}`
+      );
+
+      if (!getResultResponse.ok) {
+        // If the API returns a server error, wait and retry. Otherwise, fail immediately.
+        if (getResultResponse.status >= 500) {
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+            continue;
+        }
+        throw new Error(`HTTP error! status: ${getResultResponse.status}`);
+      }
+
+      resultData = await getResultResponse.json();
+
+      if (resultData.status === 'finished') {
+        break; // Exit loop if measurement is finished
+      }
+      
+      // Wait for 2 seconds before polling again
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    const resultData = await getResultResponse.json();
+    if (!resultData || resultData.status !== 'finished') {
+        throw new Error(`Measurement ${id} did not complete in time.`);
+    }
     console.log(
       "Result from Globalping API:",
       JSON.stringify(resultData, null, 2)

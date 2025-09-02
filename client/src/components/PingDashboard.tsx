@@ -1,21 +1,11 @@
 import { useState, useEffect } from 'react';
 import styles from './PingDashboard.module.scss';
+import CountryChart from './CountryChart';
 
 interface PingLog {
-  id: number;
-  probe_id: string;
-  country: string;
-  city: string;
-  asn: number;
-  network: string;
-  packets_sent: number;
-  packets_received: number;
-  packet_loss: number;
-  rtt_min: number;
-  rtt_max: number;
   rtt_avg: number;
-  rtt_mdev: number;
   created_at: string;
+  packet_loss: number;
 }
 
 const PingDashboard = () => {
@@ -31,18 +21,8 @@ const PingDashboard = () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data: PingLog[] = await response.json();
-      
-      const groupedLogs = data.reduce((acc, log) => {
-        const country = log.country;
-        if (!acc[country]) {
-          acc[country] = [];
-        }
-        acc[country].push(log);
-        return acc;
-      }, {} as Record<string, PingLog[]>);
-
-      setLogsByCountry(groupedLogs);
+      const data: Record<string, PingLog[]> = await response.json();
+      setLogsByCountry(data);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -79,12 +59,6 @@ const PingDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusColor = (packetLoss: number) => {
-    if (packetLoss === 0) return styles.green;
-    if (packetLoss > 0 && packetLoss < 100) return styles.yellow;
-    return styles.red;
-  };
-
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -92,17 +66,8 @@ const PingDashboard = () => {
     <div className={styles.pingDashboard}>
       <h2>Статус yummyani.me</h2>
       {Object.entries(logsByCountry).map(([country, logs]) => (
-        <div key={country} className={styles.countryRow}>
-          <span className={styles.countryName}>{country}</span>
-          <div className={styles.pingSquares}>
-            {logs.slice(0, 50).reverse().map((log) => (
-              <div
-                key={log.id}
-                className={`${styles.pingSquare} ${getStatusColor(log.packet_loss)}`}
-                title={`City: ${log.city}\nNetwork: ${log.network}\nPacket Loss: ${log.packet_loss}%\nAvg RTT: ${log.rtt_avg}ms`}
-              ></div>
-            ))}
-          </div>
+        <div key={country} className={styles.countryChart}>
+          <CountryChart country={country} logs={logs} />
         </div>
       ))}
     </div>
