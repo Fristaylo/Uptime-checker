@@ -128,8 +128,14 @@ app.post("/ping", async (req, res) => {
       JSON.stringify(resultData, null, 2)
     );
     for (const result of resultData.results) {
-      // Step 4: Save to database
-      const { probe, result: pingResult } = result; // Destructure for easier access
+      const { probe, result: pingResult } = result;
+
+      // Gracefully handle cases where a probe failed
+      if (pingResult.status !== 'finished' || !pingResult.stats) {
+        console.log(`Skipping result for ${probe.country} due to status '${pingResult.status}' or missing stats.`);
+        continue;
+      }
+      
       const { stats } = pingResult;
 
       // Step 4: Save to database
