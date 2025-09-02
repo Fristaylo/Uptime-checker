@@ -52,11 +52,14 @@ const PingDashboard = () => {
   return (
     <div className={styles.pingDashboard}>
       <h2>Статус yummyani.me</h2>
-      {Object.entries(logsByCountry).map(([country, logs]) => (
-        <div key={country} className={styles.countryChart}>
-          <CountryChart country={country} logs={logs} />
-        </div>
-      ))}
+      {Object.entries(logsByCountry).map(([country, logs]) => {
+        const recentLogs = logs.slice(-20);
+        return (
+          <div key={country} className={styles.countryChart}>
+            <CountryChart country={country} logs={recentLogs} />
+          </div>
+        );
+      })}
     </div>
   );
 };

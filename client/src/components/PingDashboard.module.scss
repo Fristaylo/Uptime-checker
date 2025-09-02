@@ -1,15 +1,22 @@
 .pingDashboard {
-  margin: 20px;
   padding: 20px;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
-  border-radius: 5px;
+  background-color: #111;
+  color: #eee;
+  border-radius: 8px;
 
   h2 {
     margin-top: 0;
     color: #fff;
     margin-bottom: 20px;
+    text-align: center;
   }
+}
+
+.countryChart {
+  background-color: #1e1e1e;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
 }
 
 .countryRow {
