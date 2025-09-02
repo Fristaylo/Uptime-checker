@@ -8,6 +8,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 ChartJS.register(
@@ -17,14 +18,9 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
-
-interface Log {
-  rtt_avg: number;
-  created_at: string;
-  packet_loss: number;
-}
 
 interface Log {
   rtt_avg: number;
@@ -42,6 +38,17 @@ interface CountryChartProps {
 }
 
 const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
+
+const cityTranslations: { [key: string]: string } = {
+  Moscow: "Москва",
+  "Saint Petersburg": "Санкт-Петербург",
+  Kyiv: "Киев",
+  Lviv: "Львов",
+  Almaty: "Алматы",
+  Riga: "Рига",
+  Vilnius: "Вильнюс",
+  Tallinn: "Таллин",
+};
 
 const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
   const allLogs = Object.values(cityLogs).flat();
@@ -71,23 +78,37 @@ const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
     );
 
     return {
-      label: city,
+      label: cityTranslations[city] || city,
       data: labels.map((label) => dataMap.get(label) || null),
       borderColor: color,
-      backgroundColor: `${color}33`, // Add alpha for fill
+      backgroundColor: `${color}33`,
       pointBackgroundColor: color,
-      pointBorderColor: "#fff",
       pointRadius: 5,
       pointHoverRadius: 7,
+      pointHitRadius: 20,
       tension: 0.4,
       fill: true,
       spanGaps: true,
     };
   });
 
+  const sortedDatasets = [...datasets].sort((a, b) => {
+    const aData = a.data.filter((v): v is number => v !== null);
+    const bData = b.data.filter((v): v is number => v !== null);
+    const aAvg =
+      aData.length > 0
+        ? aData.reduce((acc, val) => acc + val, 0) / aData.length
+        : 0;
+    const bAvg =
+      bData.length > 0
+        ? bData.reduce((acc, val) => acc + val, 0) / bData.length
+        : 0;
+    return bAvg - aAvg;
+  });
+
   const chartData = {
     labels,
-    datasets,
+    datasets: sortedDatasets,
   };
 
   const options = {
@@ -98,93 +119,28 @@ const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
         position: "bottom" as const,
         labels: {
           color: "#d4d4d4",
+          usePointStyle: true,
+          pointStyle: "circle",
         },
       },
       title: {
         display: false,
       },
       tooltip: {
-        enabled: false,
-        external: function (context: any) {
-          // Tooltip Element
-          let tooltipEl = document.getElementById("chartjs-tooltip");
-
-          // Create element on first render
-          if (!tooltipEl) {
-            tooltipEl = document.createElement("div");
-            tooltipEl.id = "chartjs-tooltip";
-            tooltipEl.innerHTML = "<table></table>";
-            document.body.appendChild(tooltipEl);
-          }
-
-          // Hide if no tooltip
-          const tooltipModel = context.tooltip;
-          if (tooltipModel.opacity === 0) {
-            tooltipEl.style.opacity = "0";
-            return;
-          }
-
-          // Set caret Position
-          tooltipEl.classList.remove("above", "below", "no-transform");
-          if (tooltipModel.yAlign) {
-            tooltipEl.classList.add(tooltipModel.yAlign);
-          } else {
-            tooltipEl.classList.add("no-transform");
-          }
-
-          function getBody(bodyItem: any) {
-            return bodyItem.lines;
-          }
-
-          // Set Text
-          if (tooltipModel.body) {
-            const titleLines = tooltipModel.title || [];
-            const bodyLines = tooltipModel.body.map(getBody);
-
-            let innerHtml = "<thead>";
-
-            titleLines.forEach(function (title: any) {
-              innerHtml += "<tr><th>" + title + "</th></tr>";
-            });
-            innerHtml += "</thead><tbody>";
-
-            bodyLines.forEach(function (body: any, i: number) {
-              const colors = tooltipModel.labelColors[i];
-              let style = "background:" + colors.backgroundColor;
-              style += "; border-color:" + colors.borderColor;
-              style += "; border-width: 2px";
-              const span = '<span style="' + style + '"></span>';
-              innerHtml += "<tr><td>" + span + body + "</td></tr>";
-            });
-            innerHtml += "</tbody>";
-
-            let table = tooltipEl.querySelector("table");
-            if (table) {
-              table.innerHTML = innerHtml;
-            }
-          }
-
-          const position = context.chart.canvas.getBoundingClientRect();
-
-          // Display, position, and set styles for font
-          tooltipEl.style.opacity = "1";
-          tooltipEl.style.position = "absolute";
-          tooltipEl.style.left =
-            position.left + window.pageXOffset + tooltipModel.caretX + "px";
-          tooltipEl.style.top =
-            position.top + window.pageYOffset + tooltipModel.caretY + "px";
-          tooltipEl.style.font = '1rem "Helvetica Neue", sans-serif';
-          tooltipEl.style.padding =
-            tooltipModel.padding + "px " + tooltipModel.padding + "px";
-          tooltipEl.style.pointerEvents = "none";
-          tooltipEl.style.background = "#333";
-          tooltipEl.style.color = "white";
-          tooltipEl.style.borderRadius = "3px";
+        titleFont: {
+          size: 16,
+        },
+        bodyFont: {
+          size: 14,
         },
         callbacks: {
           label: function (context: any) {
             const city = context.dataset.label;
-            const allLogsForCity = cityLogs[city] || [];
+            const originalCity =
+              Object.keys(cityTranslations).find(
+                (key) => cityTranslations[key] === city
+              ) || city;
+            const allLogsForCity = cityLogs[originalCity] || [];
             const log = allLogsForCity.find(
               (l: Log) =>
                 new Date(l.created_at).toLocaleTimeString([], {
@@ -196,8 +152,9 @@ const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
             if (!log) return "";
 
             return [
-              `RTT: ${context.parsed.y.toFixed(2)} ms`,
-              `Packet Loss: ${log.packet_loss}%`,
+              city,
+              `Пинг: ${context.parsed.y.toFixed(0)}мс`,
+              `Потеря пакетов: ${log.packet_loss}%`,
             ];
           },
         },

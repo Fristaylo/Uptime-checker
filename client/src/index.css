@@ -27,6 +27,11 @@ body {
   min-width: 320px;
 }
 
+#root {
+  max-width: 1390px;
+  margin: 0 auto;
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;

@@ -1,6 +1,5 @@
 .pingDashboard {
   padding: 20px;
-  background-color: #111;
   color: #eee;
   border-radius: 8px;
 
@@ -12,14 +11,27 @@
   }
 }
 
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1000px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .countryChart {
-  background-color: #1e1e1e;
+  background-color: #1d1d1d;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
   display: flex;
   height: 300px;
   flex-direction: column;
+  min-width: 0;
 }
 
 .chartContainer {

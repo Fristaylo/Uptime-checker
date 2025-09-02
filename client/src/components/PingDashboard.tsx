@@ -75,31 +75,33 @@ const PingDashboard = () => {
           </select>
         </div>
       </div>
-      {Object.entries(logs)
-        .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
-        .map(([countryCode, cityLogs]) => {
-          const countryName = countryNames[countryCode] || countryCode;
-          return (
-            <div key={countryCode} className={styles.countryChart}>
-            <div className={styles.countryHeader}>
-              <ReactCountryFlag
-                countryCode={countryCode}
-                svg
-                style={{
-                  width: "24px",
-                  height: "16px",
-                  borderRadius: "5px",
-                }}
-                title={countryName}
-              />
-              <p className={styles.countryName}>{countryName}</p>
-            </div>
-            <div className={styles.chartContainer}>
-              <CountryChart cityLogs={cityLogs} limit={limit} />
-            </div>
-          </div>
-        );
-      })}
+      <div className={styles.chartsGrid}>
+        {Object.entries(logs)
+          .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
+          .map(([countryCode, cityLogs]) => {
+            const countryName = countryNames[countryCode] || countryCode;
+            return (
+              <div key={countryCode} className={styles.countryChart}>
+                <div className={styles.countryHeader}>
+                  <ReactCountryFlag
+                    countryCode={countryCode}
+                    svg
+                    style={{
+                      width: "24px",
+                      height: "16px",
+                      borderRadius: "5px",
+                    }}
+                    title={countryName}
+                  />
+                  <p className={styles.countryName}>{countryName}</p>
+                </div>
+                <div className={styles.chartContainer}>
+                  <CountryChart cityLogs={cityLogs} limit={limit} />
+                </div>
+              </div>
+            );
+          })}
+      </div>
     </div>
   );
 };
