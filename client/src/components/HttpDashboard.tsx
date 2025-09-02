@@ -22,12 +22,14 @@ const HttpDashboard: React.FC = () => {
         // Format the timestamp for better chart readability
         for (const country in formattedData) {
           for (const city in formattedData[country]) {
-            formattedData[country][city] = formattedData[country][city].map(
-              (log: any) => ({
-                ...log,
-                created_at: new Date(log.created_at).toLocaleTimeString(),
-              })
-            );
+            if (Array.isArray(formattedData[country][city])) {
+              formattedData[country][city] = formattedData[country][city].map(
+                (log: any) => ({
+                  ...log,
+                  created_at: new Date(log.created_at).toLocaleTimeString(),
+                })
+              );
+            }
           }
         }
         setData(formattedData);
@@ -51,30 +53,32 @@ const HttpDashboard: React.FC = () => {
           {Object.keys(data[country]).map((city) => (
             <div key={city}>
               <h4>{city}</h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={data[country][city]}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="created_at" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="status_code"
-                    stroke="#8884d8"
-                    name="Status Code"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="ttfb"
-                    stroke="#82ca9d"
-                    name="TTFB (ms)"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {Array.isArray(data[country][city]) && (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={data[country][city]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="created_at" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="status_code"
+                      stroke="#8884d8"
+                      name="Status Code"
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="ttfb"
+                      stroke="#82ca9d"
+                      name="TTFB (ms)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           ))}
         </div>
