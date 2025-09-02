@@ -31,6 +31,7 @@ const PingDashboard = () => {
   };
 
   const triggerPing = async () => {
+    console.log(`[${new Date().toLocaleTimeString()}] Triggering ping...`);
     try {
       const response = await fetch('/ping', {
         method: 'POST',
@@ -43,43 +44,31 @@ const PingDashboard = () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      // Ping was successful, now refresh the logs
-      setTimeout(fetchLogs, 5000); // Wait 5 seconds for logs to update
+      console.log(`[${new Date().toLocaleTimeString()}] Ping request successful.`);
     } catch (e: any) {
       setError(e.message);
+      console.error(`[${new Date().toLocaleTimeString()}] Error in triggerPing:`, e);
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const pollData = async () => {
-      if (!isMounted) return;
-
-      setLoading(true);
-      try {
-        // First, trigger the ping measurement on the backend
-        await triggerPing();
-        // Then, wait a bit for the measurement to be processed and saved
-        await new Promise(resolve => setTimeout(resolve, 7000)); // Increased wait time
-        // Finally, fetch the latest logs to update the charts
-        await fetchLogs();
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-          // Schedule the next poll
-          setTimeout(pollData, 120000); // 2 minutes
-        }
-      }
+    const runCycle = async () => {
+      await triggerPing();
+      // Wait for measurement to be processed before fetching
+      await new Promise(resolve => setTimeout(resolve, 7000));
+      await fetchLogs();
     };
 
-    pollData(); // Start the polling cycle
+    // Run once immediately on component mount
+    runCycle();
+
+    // Then set up the interval for subsequent runs
+    const interval = setInterval(runCycle, 120000); // 2 minutes
+    console.log(`[${new Date().toLocaleTimeString()}] Interval set for 2 minutes.`);
 
     return () => {
-      isMounted = false;
+      clearInterval(interval);
+      console.log(`[${new Date().toLocaleTimeString()}] Interval cleared.`);
     };
   }, []);
 
