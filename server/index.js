@@ -104,7 +104,10 @@ app.get("/api/http-logs", async (req, res) => {
       acc[row.country][row.city] = row.logs;
       return acc;
     }, {});
-    console.log("Sending data to client:", JSON.stringify(logsByCountryCity, null, 2));
+    console.log(
+      "Sending data to client:",
+      JSON.stringify(logsByCountryCity, null, 2)
+    );
     res.json(logsByCountryCity);
   } catch (err) {
     console.error(err);
@@ -113,7 +116,9 @@ app.get("/api/http-logs", async (req, res) => {
 });
 
 const pingAndSave = async () => {
-  console.log(`--- Starting PING check cycle at ${new Date().toISOString()} ---`);
+  console.log(
+    `--- Starting PING check cycle at ${new Date().toISOString()} ---`
+  );
   const target = "site.yummyani.me";
   const locations = [
     { country: "RU", city: "Moscow" },
@@ -245,7 +250,9 @@ const pingAndSave = async () => {
 };
 
 const httpCheckAndSave = async () => {
-  console.log(`--- Starting HTTP check cycle at ${new Date().toISOString()} ---`);
+  console.log(
+    `--- Starting HTTP check cycle at ${new Date().toISOString()} ---`
+  );
   const target = "site.yummyani.me";
   const locations = [
     { country: "RU", city: "Moscow" },
@@ -376,7 +383,13 @@ const httpCheckAndSave = async () => {
 };
 
 // Serve static files from the React app after API routes
-app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);

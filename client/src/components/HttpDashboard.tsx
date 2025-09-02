@@ -1,6 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const HttpDashboard: React.FC = () => {
   const [data, setData] = useState<any>({});
@@ -8,11 +17,11 @@ const HttpDashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('/api/http-logs');
-        console.log('Received data:', response.data); // Log the data to the browser console
+        const response = await axios.get("/http-logs");
+        console.log("Received data:", response.data); // Log the data to the browser console
         setData(response.data);
       } catch (error) {
-        console.error('Error fetching HTTP logs:', error);
+        console.error("Error fetching HTTP logs:", error);
       }
     };
 
@@ -39,8 +48,20 @@ const HttpDashboard: React.FC = () => {
                   <YAxis yAxisId="right" orientation="right" />
                   <Tooltip />
                   <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="status_code" stroke="#8884d8" name="Status Code" />
-                  <Line yAxisId="right" type="monotone" dataKey="ttfb" stroke="#82ca9d" name="TTFB (ms)" />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="status_code"
+                    stroke="#8884d8"
+                    name="Status Code"
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="ttfb"
+                    stroke="#82ca9d"
+                    name="TTFB (ms)"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>

@@ -33,11 +33,11 @@ const PingDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState(20);
-  const [view, setView] = useState('ping');
+  const [view, setView] = useState("ping");
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch("/api/logs");
+      const response = await fetch("/logs");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -64,8 +64,8 @@ const PingDashboard = () => {
       <div className={styles.header}>
         <h2>Статус yummyani.me</h2>
         <div className={styles.controls}>
-          <button onClick={() => setView('ping')}>Ping</button>
-          <button onClick={() => setView('http')}>HTTP</button>
+          <button onClick={() => setView("ping")}>Ping</button>
+          <button onClick={() => setView("http")}>HTTP</button>
           <label htmlFor="limit-select">Точек на графике:</label>
           <select
             id="limit-select"
@@ -79,10 +79,12 @@ const PingDashboard = () => {
           </select>
         </div>
       </div>
-      {view === 'ping' ? (
+      {view === "ping" ? (
         <div className={styles.chartsGrid}>
           {Object.entries(logs)
-            .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
+            .sort(
+              ([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b)
+            )
             .map(([countryCode, cityLogs]) => {
               const countryName = countryNames[countryCode] || countryCode;
               return (
