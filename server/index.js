@@ -66,14 +66,14 @@ app.get("/logs", async (req, res) => {
 const pingAndSave = async () => {
   const target = "site.yummyani.me";
   const locations = [
-    { country: "LV", city: "Riga" },
-    { country: "LT", city: "Vilnius" },
-    { country: "EE", city: "Tallinn" },
-    { country: "KZ", city: "Astana" },
     { country: "RU", city: "Moscow" },
     { country: "RU", city: "Saint Petersburg" },
     { country: "UA", city: "Kyiv" },
     { country: "UA", city: "Lviv" },
+    { country: "KZ", city: "Astana" },
+    { country: "LV", city: "Riga" },
+    { country: "LT", city: "Vilnius" },
+    { country: "EE", city: "Tallinn" },
   ];
   const apiKey = process.env.GLOBALPING_API_KEY;
 

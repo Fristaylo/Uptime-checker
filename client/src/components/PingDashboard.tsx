@@ -17,6 +17,7 @@ const countryNames: Record<string, string> = {
   EE: "Эстония",
   KZ: "Казахстан",
 };
+const countryOrder = ["RU", "UA", "KZ", "LV", "LT", "EE"];
 
 interface CityPingLogs {
   [city: string]: PingLog[];
@@ -74,10 +75,12 @@ const PingDashboard = () => {
           </select>
         </div>
       </div>
-      {Object.entries(logs).map(([countryCode, cityLogs]) => {
-        const countryName = countryNames[countryCode] || countryCode;
-        return (
-          <div key={countryCode} className={styles.countryChart}>
+      {Object.entries(logs)
+        .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
+        .map(([countryCode, cityLogs]) => {
+          const countryName = countryNames[countryCode] || countryCode;
+          return (
+            <div key={countryCode} className={styles.countryChart}>
             <div className={styles.countryHeader}>
               <ReactCountryFlag
                 countryCode={countryCode}
