@@ -132,20 +132,22 @@ const pingAndSave = async () => {
   }
   try {
     // Step 1: Create the measurement
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        target,
+        locations: locations.map((location) => ({ ...location, limit: 1 })),
+        type: "ping",
+      }),
+    };
+    console.log("[PING] Sending request with options:", JSON.stringify(requestOptions, null, 2));
     const createMeasurementResponse = await fetch(
       "https://api.globalping.io/v1/measurements",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          target,
-          locations: locations.map((location) => ({ ...location, limit: 1 })),
-          type: "ping",
-        }),
-      }
+      requestOptions
     );
 
     if (!createMeasurementResponse.ok) {
@@ -263,23 +265,25 @@ const httpCheckAndSave = async () => {
   }
   try {
     // Step 1: Create the measurement
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        target: target,
+        locations: locations.map((location) => ({ ...location, limit: 1 })),
+        type: "http",
+        measurementOptions: {
+          protocol: "HTTPS",
+        },
+      }),
+    };
+    console.log("[HTTP] Sending request with options:", JSON.stringify(requestOptions, null, 2));
     const createMeasurementResponse = await fetch(
       "https://api.globalping.io/v1/measurements",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          target: target,
-          locations: locations.map((location) => ({ ...location, limit: 1 })),
-          type: "http",
-          measurementOptions: {
-            protocol: "HTTPS",
-          },
-        }),
-      }
+      requestOptions
     );
 
     if (!createMeasurementResponse.ok) {
