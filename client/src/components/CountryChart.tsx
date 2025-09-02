@@ -27,13 +27,11 @@ interface Log {
 }
 
 interface CountryChartProps {
-  country: string;
   logs: Log[];
   lineColor?: string;
 }
 
 const CountryChart = ({
-  country,
   logs,
   lineColor = "#d4af37",
 }: CountryChartProps) => {

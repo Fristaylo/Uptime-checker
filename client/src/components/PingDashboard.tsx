@@ -94,7 +94,7 @@ const PingDashboard = () => {
               <p className={styles.countryName}>{countryName}</p>
             </div>
             <div className={styles.chartContainer}>
-              <CountryChart country={countryName} logs={recentLogs} />
+              <CountryChart logs={recentLogs} />
             </div>
           </div>
         );
@@ -119,11 +119,7 @@ const PingDashboard = () => {
               <p className={styles.countryName}>{cityName}</p>
             </div>
             <div className={styles.chartContainer}>
-              <CountryChart
-                country={cityName}
-                logs={recentLogs}
-                lineColor="#82ca9d"
-              />
+              <CountryChart logs={recentLogs} lineColor="#82ca9d" />
             </div>
           </div>
         );
