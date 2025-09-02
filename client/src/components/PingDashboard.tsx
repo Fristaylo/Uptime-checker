@@ -52,11 +52,35 @@ const PingDashboard = () => {
   };
 
   useEffect(() => {
-    fetchLogs();
-    triggerPing();
-    const interval = setInterval(triggerPing, 120000); // 2 minutes
+    let isMounted = true;
 
-    return () => clearInterval(interval);
+    const pollData = async () => {
+      if (!isMounted) return;
+
+      setLoading(true);
+      try {
+        // First, trigger the ping measurement on the backend
+        await triggerPing();
+        // Then, wait a bit for the measurement to be processed and saved
+        await new Promise(resolve => setTimeout(resolve, 7000)); // Increased wait time
+        // Finally, fetch the latest logs to update the charts
+        await fetchLogs();
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          // Schedule the next poll
+          setTimeout(pollData, 120000); // 2 minutes
+        }
+      }
+    };
+
+    pollData(); // Start the polling cycle
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) return <div>Loading...</div>;
