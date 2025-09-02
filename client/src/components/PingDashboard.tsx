@@ -30,46 +30,15 @@ const PingDashboard = () => {
     }
   };
 
-  const triggerPing = async () => {
-    console.log(`[${new Date().toLocaleTimeString()}] Triggering ping...`);
-    try {
-      const response = await fetch('/ping', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ target: 'site.yummyani.me', countries }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      console.log(`[${new Date().toLocaleTimeString()}] Ping request successful.`);
-    } catch (e: any) {
-      setError(e.message);
-      console.error(`[${new Date().toLocaleTimeString()}] Error in triggerPing:`, e);
-    }
-  };
-
   useEffect(() => {
-    const runCycle = async () => {
-      await triggerPing();
-      // Wait for measurement to be processed before fetching
-      await new Promise(resolve => setTimeout(resolve, 7000));
-      await fetchLogs();
-    };
+    // Fetch logs immediately on component mount
+    fetchLogs();
 
-    // Run once immediately on component mount
-    runCycle();
+    // Then set up an interval to fetch logs every minute
+    const interval = setInterval(fetchLogs, 60000); // 1 minute
 
-    // Then set up the interval for subsequent runs
-    const interval = setInterval(runCycle, 120000); // 2 minutes
-    console.log(`[${new Date().toLocaleTimeString()}] Interval set for 2 minutes.`);
-
-    return () => {
-      clearInterval(interval);
-      console.log(`[${new Date().toLocaleTimeString()}] Interval cleared.`);
-    };
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div>Loading...</div>;
