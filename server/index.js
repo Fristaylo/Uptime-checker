@@ -52,12 +52,14 @@ app.get("/logs", async (req, res) => {
   }
 });
 
-app.post("/ping", async (req, res) => {
-  const { target, countries } = req.body;
+const pingAndSave = async () => {
+  const target = "site.yummyani.me";
+  const countries = ["RU", "UA", "LV", "LT", "EE", "KZ"];
   const apiKey = process.env.GLOBALPING_API_KEY;
 
   if (!target) {
-    return res.status(400).send("Target is required");
+    console.error("Target is not defined");
+    return;
   }
   try {
     // Step 1: Create the measurement
@@ -82,17 +84,12 @@ app.post("/ping", async (req, res) => {
       console.error(
         `Failed to create measurement: ${createMeasurementResponse.status} ${createMeasurementResponse.statusText}. Body: ${errorBody}`
       );
-      // Send a non-fatal response to the client so the UI doesn't break
-      res
-        .status(200)
-        .json({ message: "Failed to create measurement, server will retry." });
       return;
     }
 
     const { id } = await createMeasurementResponse.json();
     console.log(`Measurement created with ID: ${id}`);
 
-    // Step 2: Wait a few seconds for the measurement to complete
     // Step 2 & 3: Poll for the measurement result until it's finished
     let resultData;
     const startTime = Date.now();
@@ -104,9 +101,8 @@ app.post("/ping", async (req, res) => {
       );
 
       if (!getResultResponse.ok) {
-        // If the API returns a server error, wait and retry. Otherwise, fail immediately.
         if (getResultResponse.status >= 500) {
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           continue;
         }
         throw new Error(`HTTP error! status: ${getResultResponse.status}`);
@@ -115,19 +111,14 @@ app.post("/ping", async (req, res) => {
       resultData = await getResultResponse.json();
 
       if (resultData.status === "finished") {
-        break; // Exit loop if measurement is finished
+        break;
       }
 
-      // Wait for 2 seconds before polling again
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
     if (!resultData || resultData.status !== "finished") {
       throw new Error(`Measurement ${id} did not complete in time.`);
-    }
-    if (!resultData) {
-      // This can happen if the API call fails consistently.
-      throw new Error(`Could not retrieve measurement ${id}.`);
     }
 
     for (const result of resultData.results) {
@@ -151,7 +142,6 @@ app.post("/ping", async (req, res) => {
           stats.mdev || 0,
         ];
       } else {
-        // If the probe failed or is not finished, log it as 100% packet loss
         console.log(
           `Probe for ${probe.country} has status: '${pingResult.status}'. Logging as 100% packet loss.`
         );
@@ -161,17 +151,15 @@ app.post("/ping", async (req, res) => {
           probe.city,
           probe.asn,
           probe.network,
-          3, // packetsSent (assumed)
-          0, // packetsReceived
-          100, // packetLoss
-          null, // rttMin
-          null, // rttMax
-          null, // rttAvg
-          null, // rttMdev
+          3,
+          0,
+          100,
+          null,
+          null,
+          null,
+          null,
         ];
       }
-
-      console.log("Saving the following values to DB:", values);
 
       const query = `
       INSERT INTO ping_logs (
@@ -183,17 +171,14 @@ app.post("/ping", async (req, res) => {
       await pool.query(query, values);
       console.log(`Successfully saved log for ${probe.country} to DB.`);
     }
-    res.status(201).json({ message: "Ping measurement processed" });
   } catch (err) {
     console.error("Failed to complete ping measurement cycle:", err.message);
-    // We send a 200 OK response so the frontend doesn't show a fatal error.
-    // The frontend will simply fetch the existing logs again on its next interval.
-    // The actual error is logged on the server for debugging.
-    res.status(200).json({ message: "Ping cycle failed, server will retry." });
   }
-});
+};
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
   createTable();
+  pingAndSave(); // Run once on startup
+  setInterval(pingAndSave, 120000); // Run every 2 minutes
 });
