@@ -28,7 +28,6 @@ const createTable = async () => {
   `;
   try {
     await pool.query(query);
-    console.log('Table "ping_logs" created or already exists.');
   } catch (err) {
     console.error("Error creating table", err);
   }
@@ -77,7 +76,6 @@ app.get("/logs", async (req, res) => {
       acc[row.country][row.city] = row.logs;
       return acc;
     }, {});
-    console.log("Sending data to client:", JSON.stringify(logsByCountryCity, null, 2));
     res.json(logsByCountryCity);
   } catch (err) {
     console.error(err);
@@ -159,7 +157,6 @@ const pingAndSave = async () => {
     }
 
     const { id } = await createMeasurementResponse.json();
-    console.log(`Measurement created with ID: ${id}`);
 
     // Step 2 & 3: Poll for the measurement result until it's finished
     let resultData;
@@ -192,16 +189,12 @@ const pingAndSave = async () => {
       throw new Error(`Measurement ${id} did not complete in time.`);
     }
 
-    console.log(`--- Ping results at ${new Date().toISOString()} ---`);
     for (const result of resultData.results) {
       const { probe, result: pingResult } = result;
       let values;
 
       if (pingResult.status === "finished" && pingResult.stats) {
         const { stats } = pingResult;
-        console.log(
-          `[SUCCESS] Ping to ${probe.city}, ${probe.country}: RTT avg ${stats.avg} ms`
-        );
         values = [
           id,
           probe.country,
@@ -217,11 +210,6 @@ const pingAndSave = async () => {
           stats.mdev || 0,
         ];
       } else {
-        console.log(
-          `[FAILURE] Ping to ${probe.city}, ${
-            probe.country
-          }: Status ${pingResult.status.toUpperCase()}`
-        );
         values = [
           id,
           probe.country,
@@ -247,7 +235,6 @@ const pingAndSave = async () => {
 
       await pool.query(query, values);
     }
-    console.log(`--- End of ping results ---`);
   } catch (err) {
     console.error("Failed to complete ping measurement cycle:", err.message);
   }
