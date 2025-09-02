@@ -54,12 +54,7 @@ const cityTranslations: { [key: string]: string } = {
 };
 
 const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
-  const limitedCityLogs: CityLogs = {};
-  for (const city in cityLogs) {
-    limitedCityLogs[city] = cityLogs[city].slice(-limit);
-  }
-
-  const allLogs = Object.values(limitedCityLogs).flat();
+  const allLogs = Object.values(cityLogs).flat();
   const labels = [
     ...new Set(
       allLogs.map((log: Log) =>
@@ -69,20 +64,21 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
         })
       )
     ),
-  ].sort();
+  ]
+    .sort()
+    .slice(-limit);
 
-  const datasets = Object.entries(limitedCityLogs).map(
-    ([city, logs], index) => {
-      const color = lineColors[index % lineColors.length];
-      const dataMap = new Map(
-        (logs as Log[]).map((log: Log) => [
-          new Date(log.created_at).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          dataType === "ping" ? log.rtt_avg : log.ttfb,
-        ])
-      );
+  const datasets = Object.entries(cityLogs).map(([city, logs], index) => {
+    const color = lineColors[index % lineColors.length];
+    const dataMap = new Map(
+      (logs as Log[]).slice(-limit).map((log: Log) => [
+        new Date(log.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        dataType === "ping" ? log.rtt_avg : log.ttfb,
+      ])
+    );
 
     return {
       label: cityTranslations[city] || city,
@@ -167,7 +163,7 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
             } else {
               return [
                 city,
-                `Общее время: ${context.parsed.y.toFixed(0)}мс`,
+                `TTFB: ${context.parsed.y.toFixed(0)}мс`,
                 `Статус: ${log.status_code}`,
               ];
             }

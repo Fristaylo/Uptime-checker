@@ -49,8 +49,9 @@ const createHttpTable = async () => {
   `;
   try {
     await pool.query(query);
+    console.log('Table "http_logs" created or already exists.');
   } catch (err) {
-    console.error("Error creating http_logs table", err);
+    console.error("Error creating table", err);
   }
 };
 
