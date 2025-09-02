@@ -34,8 +34,14 @@ const createTable = async () => {
 };
 
 const createHttpTable = async () => {
-  const query = `
-    CREATE TABLE IF NOT EXISTS http_logs (
+  const checkColumnQuery = `
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name='http_logs' AND column_name='dns';
+  `;
+
+  const createTableQuery = `
+    CREATE TABLE http_logs (
       id SERIAL PRIMARY KEY,
       probe_id VARCHAR(255),
       country VARCHAR(2),
@@ -44,14 +50,37 @@ const createHttpTable = async () => {
       network VARCHAR(255),
       status_code INT,
       ttfb FLOAT,
+      dns FLOAT,
+      tcp FLOAT,
+      tls FLOAT,
+      first_byte FLOAT,
+      download FLOAT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
+
   try {
-    await pool.query(query);
-    console.log('Table "http_logs" created or already exists.');
+    const { rows } = await pool.query(checkColumnQuery);
+    if (rows.length === 0) {
+      console.log('Column "dns" not found in "http_logs", recreating table.');
+      await pool.query('DROP TABLE IF EXISTS http_logs;');
+      await pool.query(createTableQuery);
+      console.log('Table "http_logs" recreated.');
+    } else {
+      console.log('Table "http_logs" already has the new schema.');
+    }
   } catch (err) {
-    console.error("Error creating table", err);
+    // If the table doesn't exist at all, an error will be thrown. Create it.
+    if (err.code === '42P01') {
+      try {
+        await pool.query(createTableQuery);
+        console.log('Table "http_logs" created.');
+      } catch (createErr) {
+        console.error("Error creating table", createErr);
+      }
+    } else {
+      console.error("Error checking or creating table", err);
+    }
   }
 };
 
@@ -89,7 +118,7 @@ app.get("/http-logs", async (req, res) => {
       SELECT
         country,
         city,
-        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'ttfb', ttfb) ORDER BY created_at ASC) as logs
+        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'ttfb', ttfb, 'dns', dns, 'tcp', tcp, 'tls', tls, 'first_byte', first_byte, 'download', download) ORDER BY created_at ASC) as logs
       FROM
         http_logs
       WHERE
@@ -350,6 +379,11 @@ const httpCheckAndSave = async () => {
           probe.network,
           httpResult.statusCode,
           httpResult.timings.total,
+          httpResult.timings.dns,
+          httpResult.timings.tcp,
+          httpResult.timings.tls,
+          httpResult.timings.firstByte,
+          httpResult.timings.download,
         ];
       } else {
         console.log(
@@ -365,13 +399,18 @@ const httpCheckAndSave = async () => {
           probe.network,
           null,
           null,
+          null,
+          null,
+          null,
+          null,
+          null,
         ];
       }
 
       const query = `
       INSERT INTO http_logs (
-        probe_id, country, city, asn, network, status_code, ttfb
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        probe_id, country, city, asn, network, status_code, ttfb, dns, tcp, tls, first_byte, download
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     `;
 
       await pool.query(query, values);

@@ -23,18 +23,26 @@ ChartJS.register(
 );
 
 interface Log {
-  rtt_avg: number;
+  rtt_avg?: number;
   created_at: string;
-  packet_loss: number;
+  packet_loss?: number;
+  ttfb?: number;
+  status_code?: number;
+  dns?: number;
+  tcp?: number;
+  tls?: number;
+  first_byte?: number;
+  download?: number;
 }
 
-interface CityPingLogs {
+interface CityLogs {
   [city: string]: Log[];
 }
 
 interface CountryChartProps {
-  cityLogs: CityPingLogs;
+  cityLogs: CityLogs;
   limit: number;
+  dataType: "ping" | "http";
 }
 
 const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
@@ -50,8 +58,13 @@ const cityTranslations: { [key: string]: string } = {
   Tallinn: "Таллин",
 };
 
-const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
-  const allLogs = Object.values(cityLogs).flat();
+const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
+  const limitedCityLogs: CityLogs = {};
+  for (const city in cityLogs) {
+    limitedCityLogs[city] = cityLogs[city].slice(-limit);
+  }
+
+  const allLogs = Object.values(limitedCityLogs).flat();
   const labels = [
     ...new Set(
       allLogs.map((log: Log) =>
@@ -61,21 +74,20 @@ const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
         })
       )
     ),
-  ]
-    .sort()
-    .slice(-limit);
+  ].sort();
 
-  const datasets = Object.entries(cityLogs).map(([city, logs], index) => {
-    const color = lineColors[index % lineColors.length];
-    const dataMap = new Map(
-      (logs as Log[]).slice(-limit).map((log: Log) => [
-        new Date(log.created_at).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        log.rtt_avg,
-      ])
-    );
+  const datasets = Object.entries(limitedCityLogs).map(
+    ([city, logs], index) => {
+      const color = lineColors[index % lineColors.length];
+      const dataMap = new Map(
+        (logs as Log[]).map((log: Log) => [
+          new Date(log.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          dataType === "ping" ? log.rtt_avg : log.ttfb,
+        ])
+      );
 
     return {
       label: cityTranslations[city] || city,
@@ -151,11 +163,24 @@ const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
 
             if (!log) return "";
 
-            return [
-              city,
-              `Пинг: ${context.parsed.y.toFixed(0)}мс`,
-              `Потеря пакетов: ${log.packet_loss}%`,
-            ];
+            if (dataType === "ping") {
+              return [
+                city,
+                `Пинг: ${context.parsed.y.toFixed(0)}мс`,
+                `Потеря пакетов: ${log.packet_loss}%`,
+              ];
+            } else {
+              return [
+                city,
+                `Общее время: ${context.parsed.y.toFixed(0)}мс`,
+                `Статус: ${log.status_code}`,
+                `DNS: ${log.dns}мс`,
+                `TCP: ${log.tcp}мс`,
+                `TLS: ${log.tls}мс`,
+                `Первый байт: ${log.first_byte}мс`,
+                `Загрузка: ${log.download}мс`,
+              ];
+            }
           },
         },
       },

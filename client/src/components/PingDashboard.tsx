@@ -4,10 +4,20 @@ import CountryChart from "./CountryChart";
 import HttpDashboard from "./HttpDashboard";
 import ReactCountryFlag from "react-country-flag";
 
-interface PingLog {
-  rtt_avg: number;
+interface Log {
+  rtt_avg?: number;
   created_at: string;
-  packet_loss: number;
+  packet_loss?: number;
+  ttfb?: number;
+  status_code?: number;
+}
+
+interface CityLogs {
+  [city: string]: Log[];
+}
+
+interface CountryLogs {
+  [country: string]: CityLogs;
 }
 
 const countryNames: Record<string, string> = {
@@ -20,16 +30,9 @@ const countryNames: Record<string, string> = {
 };
 const countryOrder = ["RU", "UA", "KZ", "LV", "LT", "EE"];
 
-interface CityPingLogs {
-  [city: string]: PingLog[];
-}
-
-interface CountryPingLogs {
-  [country: string]: CityPingLogs;
-}
-
 const PingDashboard = () => {
-  const [logs, setLogs] = useState<CountryPingLogs>({});
+  const [pingLogs, setPingLogs] = useState<CountryLogs>({});
+  const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState(20);
@@ -37,12 +40,23 @@ const PingDashboard = () => {
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch("/logs");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const [pingResponse, httpResponse] = await Promise.all([
+        fetch("/logs"),
+        fetch("/http-logs"),
+      ]);
+
+      if (!pingResponse.ok) {
+        throw new Error(`HTTP error! status: ${pingResponse.status}`);
       }
-      const data: CountryPingLogs = await response.json();
-      setLogs(data);
+      if (!httpResponse.ok) {
+        throw new Error(`HTTP error! status: ${httpResponse.status}`);
+      }
+
+      const pingData: CountryLogs = await pingResponse.json();
+      const httpData: CountryLogs = await httpResponse.json();
+
+      setPingLogs(pingData);
+      setHttpLogs(httpData);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -81,7 +95,7 @@ const PingDashboard = () => {
       </div>
       {view === "ping" ? (
         <div className={styles.chartsGrid}>
-          {Object.entries(logs)
+          {Object.entries(pingLogs)
             .sort(
               ([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b)
             )
@@ -103,14 +117,18 @@ const PingDashboard = () => {
                     <p className={styles.countryName}>{countryName}</p>
                   </div>
                   <div className={styles.chartContainer}>
-                    <CountryChart cityLogs={cityLogs} limit={limit} />
+                    <CountryChart
+                      cityLogs={cityLogs}
+                      limit={limit}
+                      dataType="ping"
+                    />
                   </div>
                 </div>
               );
             })}
         </div>
       ) : (
-        <HttpDashboard />
+        <HttpDashboard logs={httpLogs} limit={limit} />
       )}
     </div>
   );

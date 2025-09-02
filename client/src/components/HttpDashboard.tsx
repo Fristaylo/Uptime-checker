@@ -1,88 +1,68 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import CountryChart from "./CountryChart";
+import styles from "./PingDashboard.module.scss";
+import ReactCountryFlag from "react-country-flag";
 
-const HttpDashboard: React.FC = () => {
-  const [data, setData] = useState<any>({});
+interface Log {
+  ttfb?: number;
+  created_at: string;
+  status_code?: number;
+}
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("/http-logs");
-        const formattedData = response.data;
-        // Format the timestamp for better chart readability
-        for (const country in formattedData) {
-          for (const city in formattedData[country]) {
-            if (Array.isArray(formattedData[country][city])) {
-              formattedData[country][city] = formattedData[country][city].map(
-                (log: any) => ({
-                  ...log,
-                  created_at: new Date(log.created_at).toLocaleTimeString(),
-                })
-              );
-            }
-          }
-        }
-        setData(formattedData);
-      } catch (error) {
-        console.error("Error fetching HTTP logs:", error);
-      }
-    };
+interface CityLogs {
+  [city: string]: Log[];
+}
 
-    fetchData();
-    const interval = setInterval(fetchData, 120000); // Update every 2 minutes
+interface CountryLogs {
+  [country: string]: CityLogs;
+}
 
-    return () => clearInterval(interval);
-  }, []);
+interface HttpDashboardProps {
+  logs: CountryLogs;
+  limit: number;
+}
 
+const countryNames: Record<string, string> = {
+  RU: "Россия",
+  UA: "Украина",
+  LV: "Латвия",
+  LT: "Литва",
+  EE: "Эстония",
+  KZ: "Казахстан",
+};
+const countryOrder = ["RU", "UA", "KZ", "LV", "LT", "EE"];
+
+const HttpDashboard = ({ logs, limit }: HttpDashboardProps) => {
   return (
-    <div>
-      <h2>HTTP Check Dashboard</h2>
-      {Object.keys(data).map((country) => (
-        <div key={country}>
-          <h3>{country}</h3>
-          {Object.keys(data[country]).map((city) => (
-            <div key={city}>
-              <h4>{city}</h4>
-              {Array.isArray(data[country][city]) && (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={data[country][city]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="created_at" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="status_code"
-                      stroke="#8884d8"
-                      name="Status Code"
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="ttfb"
-                      stroke="#82ca9d"
-                      name="TTFB (ms)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
+    <div className={styles.chartsGrid}>
+      {Object.entries(logs)
+        .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
+        .map(([countryCode, cityLogs]) => {
+          const countryName = countryNames[countryCode] || countryCode;
+          return (
+            <div key={countryCode} className={styles.countryChart}>
+              <div className={styles.countryHeader}>
+                <ReactCountryFlag
+                  countryCode={countryCode}
+                  svg
+                  style={{
+                    width: "24px",
+                    height: "16px",
+                    borderRadius: "5px",
+                  }}
+                  title={countryName}
+                />
+                <p className={styles.countryName}>{countryName}</p>
+              </div>
+              <div className={styles.chartContainer}>
+                <CountryChart
+                  cityLogs={cityLogs}
+                  limit={limit}
+                  dataType="http"
+                />
+              </div>
             </div>
-          ))}
-        </div>
-      ))}
+          );
+        })}
     </div>
   );
 };
