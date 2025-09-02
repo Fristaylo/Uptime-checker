@@ -123,36 +123,49 @@ app.post("/ping", async (req, res) => {
     if (!resultData || resultData.status !== 'finished') {
         throw new Error(`Measurement ${id} did not complete in time.`);
     }
-    console.log(
-      "Result from Globalping API:",
-      JSON.stringify(resultData, null, 2)
-    );
+    if (!resultData) {
+      // This can happen if the API call fails consistently.
+      throw new Error(`Could not retrieve measurement ${id}.`);
+    }
+
     for (const result of resultData.results) {
       const { probe, result: pingResult } = result;
+      let values;
 
-      // Gracefully handle cases where a probe failed
-      if (pingResult.status !== 'finished' || !pingResult.stats) {
-        console.log(`Skipping result for ${probe.country} due to status '${pingResult.status}' or missing stats.`);
-        continue;
+      if (pingResult.status === 'finished' && pingResult.stats) {
+        const { stats } = pingResult;
+        values = [
+          id,
+          probe.country,
+          probe.city,
+          probe.asn,
+          probe.network,
+          stats.total,
+          stats.rcv,
+          stats.loss,
+          stats.min,
+          stats.max,
+          stats.avg,
+          stats.mdev || 0,
+        ];
+      } else {
+        // If the probe failed or is not finished, log it as 100% packet loss
+        console.log(`Probe for ${probe.country} has status: '${pingResult.status}'. Logging as 100% packet loss.`);
+        values = [
+          id,
+          probe.country,
+          probe.city,
+          probe.asn,
+          probe.network,
+          3,    // packetsSent (assumed)
+          0,    // packetsReceived
+          100,  // packetLoss
+          null, // rttMin
+          null, // rttMax
+          null, // rttAvg
+          null, // rttMdev
+        ];
       }
-      
-      const { stats } = pingResult;
-
-      // Step 4: Save to database
-      const values = [
-        id, // Use measurement id as probe_id
-        probe.country,
-        probe.city,
-        probe.asn,
-        probe.network,
-        stats.total, // packetsSent
-        stats.rcv, // packetsReceived
-        stats.loss, // packetLoss
-        stats.min, // rttMin
-        stats.max, // rttMax
-        stats.avg, // rttAvg
-        stats.mdev || 0, // rttMdev (sometimes null)
-      ];
 
       console.log("Saving the following values to DB:", values);
 
@@ -166,7 +179,7 @@ app.post("/ping", async (req, res) => {
       await pool.query(query, values);
       console.log(`Successfully saved log for ${probe.country} to DB.`);
     }
-    res.status(201).send("Ping successful and log saved");
+    res.status(201).send("Ping measurement processed");
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
