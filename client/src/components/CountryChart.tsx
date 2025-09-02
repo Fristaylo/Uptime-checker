@@ -60,14 +60,13 @@ const CountryChart = ({ country, logs }: CountryChartProps) => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top" as const,
+        position: "bottom" as const,
         labels: {
           color: "#d4d4d4",
         },
       },
       title: {
-        display: true,
-        text: `Страна: ${country}`,
+        display: false,
       },
       tooltip: {
         enabled: false,

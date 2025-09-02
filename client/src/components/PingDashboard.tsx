@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
 import styles from "./PingDashboard.module.scss";
 import CountryChart from "./CountryChart";
+import ReactCountryFlag from "react-country-flag";
 
 interface PingLog {
   rtt_avg: number;
   created_at: string;
   packet_loss: number;
 }
+
+const countryNames: Record<string, string> = {
+  RU: "Россия",
+  UA: "Украина",
+  LV: "Латвия",
+  LT: "Литва",
+  EE: "Эстония",
+  KZ: "Казахстан",
+};
 
 const PingDashboard = () => {
   const [logsByCountry, setLogsByCountry] = useState<Record<string, PingLog[]>>(
@@ -52,11 +62,27 @@ const PingDashboard = () => {
   return (
     <div className={styles.pingDashboard}>
       <h2>Статус yummyani.me</h2>
-      {Object.entries(logsByCountry).map(([country, logs]) => {
+      {Object.entries(logsByCountry).map(([countryCode, logs]) => {
         const recentLogs = logs.slice(-20);
+        const countryName = countryNames[countryCode] || countryCode;
         return (
-          <div key={country} className={styles.countryChart}>
-            <CountryChart country={country} logs={recentLogs} />
+          <div key={countryCode} className={styles.countryChart}>
+            <div className={styles.countryHeader}>
+              <ReactCountryFlag
+                countryCode={countryCode}
+                svg
+                style={{
+                  width: "24px",
+                  height: "16px",
+                  borderRadius: "5px",
+                }}
+                title={countryName}
+              />
+              <p className={styles.countryName}>{countryName}</p>
+            </div>
+            <div className={styles.chartContainer}>
+              <CountryChart country={countryName} logs={recentLogs} />
+            </div>
           </div>
         );
       })}

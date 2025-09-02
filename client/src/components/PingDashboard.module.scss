@@ -17,7 +17,26 @@
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
-  height: 400px;
+  display: flex;
+  height: 300px;
+  flex-direction: column;
+}
+
+.chartContainer {
+  flex-grow: 1;
+  position: relative;
+}
+
+.countryHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.countryName {
+  margin-left: 10px;
+  color: #fff;
+  font-size: 20px;
 }
 
 .countryRow {
@@ -27,7 +46,6 @@
 }
 
 .countryName {
-  width: 50px;
   font-weight: bold;
 }
 
