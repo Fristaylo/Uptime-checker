@@ -12,8 +12,10 @@ interface PingLog {
 const countryNames: Record<string, string> = {
   RU: "Россия",
   "RU-MOW": "Россия - Москва",
+  "RU-LED": "Россия - Санкт-Петербург",
   UA: "Украина",
   "UA-IEV": "Украина - Киев",
+  "UA-LWO": "Украина - Львов",
   LV: "Латвия",
   LT: "Литва",
   EE: "Эстония",

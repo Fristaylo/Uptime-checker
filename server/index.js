@@ -38,14 +38,7 @@ app.get("/logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
     SELECT
-      CASE
-        WHEN city IN ('Moscow', 'Kyiv') THEN country || '-' ||
-          CASE
-            WHEN city = 'Moscow' THEN 'MOW'
-            WHEN city = 'Kyiv' THEN 'IEV'
-          END
-        ELSE country
-      END as location_key,
+      country as location_key,
       json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
     FROM
       ping_logs
@@ -75,7 +68,9 @@ const pingAndSave = async () => {
     { country: "EE" },
     { country: "KZ" },
     { country: "RU", city: "Moscow" },
+    { country: "RU", city: "Saint Petersburg" },
     { country: "UA", city: "Kyiv" },
+    { country: "UA", city: "Lviv" },
   ];
   const apiKey = process.env.GLOBALPING_API_KEY;
 
@@ -143,12 +138,16 @@ const pingAndSave = async () => {
       throw new Error(`Measurement ${id} did not complete in time.`);
     }
 
+    console.log(`--- Ping results at ${new Date().toISOString()} ---`);
     for (const result of resultData.results) {
       const { probe, result: pingResult } = result;
       let values;
 
       if (pingResult.status === "finished" && pingResult.stats) {
         const { stats } = pingResult;
+        console.log(
+          `[SUCCESS] Ping to ${probe.city}, ${probe.country}: RTT avg ${stats.avg} ms`
+        );
         values = [
           id,
           probe.country,
@@ -165,7 +164,9 @@ const pingAndSave = async () => {
         ];
       } else {
         console.log(
-          `Probe for ${probe.country} has status: '${pingResult.status}'. Logging as 100% packet loss.`
+          `[FAILURE] Ping to ${probe.city}, ${
+            probe.country
+          }: Status ${pingResult.status.toUpperCase()}`
         );
         values = [
           id,
@@ -191,8 +192,8 @@ const pingAndSave = async () => {
     `;
 
       await pool.query(query, values);
-      console.log(`Successfully saved log for ${probe.country} to DB.`);
     }
+    console.log(`--- End of ping results ---`);
   } catch (err) {
     console.error("Failed to complete ping measurement cycle:", err.message);
   }
