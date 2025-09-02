@@ -34,7 +34,7 @@ const createTable = async () => {
 };
 
 const createHttpTable = async () => {
-  const createTableQuery = `
+  const query = `
     CREATE TABLE IF NOT EXISTS http_logs (
       id SERIAL PRIMARY KEY,
       probe_id VARCHAR(255),
@@ -47,29 +47,10 @@ const createHttpTable = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
-
-  const columns = [
-    { name: "dns", type: "FLOAT" },
-    { name: "tcp", type: "FLOAT" },
-    { name: "tls", type: "FLOAT" },
-    { name: "first_byte", type: "FLOAT" },
-    { name: "download", type: "FLOAT" },
-  ];
-
   try {
-    await pool.query(createTableQuery);
-    console.log('Table "http_logs" created or already exists.');
-
-    for (const column of columns) {
-      const alterQuery = `
-        ALTER TABLE http_logs
-        ADD COLUMN IF NOT EXISTS ${column.name} ${column.type};
-      `;
-      await pool.query(alterQuery);
-    }
-    console.log('Table "http_logs" schema updated.');
+    await pool.query(query);
   } catch (err) {
-    console.error("Error creating or altering table", err);
+    console.error("Error creating http_logs table", err);
   }
 };
 
@@ -107,7 +88,7 @@ app.get("/http-logs", async (req, res) => {
       SELECT
         country,
         city,
-        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'ttfb', ttfb, 'dns', dns, 'tcp', tcp, 'tls', tls, 'first_byte', first_byte, 'download', download) ORDER BY created_at ASC) as logs
+        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'ttfb', ttfb) ORDER BY created_at ASC) as logs
       FROM
         http_logs
       WHERE
@@ -368,11 +349,6 @@ const httpCheckAndSave = async () => {
           probe.network,
           httpResult.statusCode,
           httpResult.timings.total,
-          httpResult.timings.dns,
-          httpResult.timings.tcp,
-          httpResult.timings.tls,
-          httpResult.timings.firstByte,
-          httpResult.timings.download,
         ];
       } else {
         console.log(
@@ -388,18 +364,13 @@ const httpCheckAndSave = async () => {
           probe.network,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
         ];
       }
 
       const query = `
       INSERT INTO http_logs (
-        probe_id, country, city, asn, network, status_code, ttfb, dns, tcp, tls, first_byte, download
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        probe_id, country, city, asn, network, status_code, ttfb
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
 
       await pool.query(query, values);

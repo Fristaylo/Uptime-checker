@@ -28,11 +28,6 @@ interface Log {
   packet_loss?: number;
   ttfb?: number;
   status_code?: number;
-  dns?: number;
-  tcp?: number;
-  tls?: number;
-  first_byte?: number;
-  download?: number;
 }
 
 interface CityLogs {
@@ -174,11 +169,6 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
                 city,
                 `Общее время: ${context.parsed.y.toFixed(0)}мс`,
                 `Статус: ${log.status_code}`,
-                `DNS: ${log.dns}мс`,
-                `TCP: ${log.tcp}мс`,
-                `TLS: ${log.tls}мс`,
-                `Первый байт: ${log.first_byte}мс`,
-                `Загрузка: ${log.download}мс`,
               ];
             }
           },
