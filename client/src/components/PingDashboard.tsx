@@ -54,7 +54,7 @@ const PingDashboard = () => {
   useEffect(() => {
     fetchLogs();
     triggerPing();
-    const interval = setInterval(triggerPing, 60000); // 1 minute
+    const interval = setInterval(triggerPing, 120000); // 2 minutes
 
     return () => clearInterval(interval);
   }, []);
