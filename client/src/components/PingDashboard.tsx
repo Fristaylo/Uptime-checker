@@ -13,8 +13,6 @@ const PingDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const countries = ['RU', 'UA', 'LV', 'LT', 'EE', 'KZ'];
-
   const fetchLogs = async () => {
     try {
       const response = await fetch('/logs');
