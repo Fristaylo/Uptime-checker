@@ -6,6 +6,14 @@ const port = 3000;
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self';"
+  );
+  next();
+});
+
 const createTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS ping_logs (
