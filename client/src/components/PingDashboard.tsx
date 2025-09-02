@@ -11,23 +11,26 @@ interface PingLog {
 
 const countryNames: Record<string, string> = {
   RU: "Россия",
-  "RU-MOW": "Россия - Москва",
-  "RU-LED": "Россия - Санкт-Петербург",
   UA: "Украина",
-  "UA-IEV": "Украина - Киев",
-  "UA-LWO": "Украина - Львов",
   LV: "Латвия",
   LT: "Литва",
   EE: "Эстония",
   KZ: "Казахстан",
 };
 
+interface CityPingLogs {
+  [city: string]: PingLog[];
+}
+
+interface CountryPingLogs {
+  [country: string]: CityPingLogs;
+}
+
 const PingDashboard = () => {
-  const [logsByCountry, setLogsByCountry] = useState<Record<string, PingLog[]>>(
-    {}
-  );
+  const [logs, setLogs] = useState<CountryPingLogs>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [limit, setLimit] = useState(20);
 
   const fetchLogs = async () => {
     try {
@@ -35,8 +38,8 @@ const PingDashboard = () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data: Record<string, PingLog[]> = await response.json();
-      setLogsByCountry(data);
+      const data: CountryPingLogs = await response.json();
+      setLogs(data);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -45,40 +48,33 @@ const PingDashboard = () => {
   };
 
   useEffect(() => {
-    // Fetch logs immediately on component mount
     fetchLogs();
-
-    // Then set up the interval to fetch logs every 2 minutes
-    const interval = setInterval(fetchLogs, 120000); // 2 minutes
-    console.log(
-      `[${new Date().toLocaleTimeString()}] Interval set for 2 minutes.`
-    );
-
-    return () => {
-      clearInterval(interval);
-      console.log(`[${new Date().toLocaleTimeString()}] Interval cleared.`);
-    };
+    const interval = setInterval(fetchLogs, 120000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const cityLogs: Record<string, PingLog[]> = {};
-  const countryLogs: Record<string, PingLog[]> = {};
-
-  Object.entries(logsByCountry).forEach(([key, logs]) => {
-    if (key.includes("-")) {
-      cityLogs[key] = logs;
-    } else {
-      countryLogs[key] = logs;
-    }
-  });
-
   return (
     <div className={styles.pingDashboard}>
-      <h2>Статус yummyani.me</h2>
-      {Object.entries(countryLogs).map(([countryCode, logs]) => {
-        const recentLogs = logs.slice(-20);
+      <div className={styles.header}>
+        <h2>Статус yummyani.me</h2>
+        <div className={styles.controls}>
+          <label htmlFor="limit-select">Точек на графике:</label>
+          <select
+            id="limit-select"
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+      </div>
+      {Object.entries(logs).map(([countryCode, cityLogs]) => {
         const countryName = countryNames[countryCode] || countryCode;
         return (
           <div key={countryCode} className={styles.countryChart}>
@@ -96,32 +92,7 @@ const PingDashboard = () => {
               <p className={styles.countryName}>{countryName}</p>
             </div>
             <div className={styles.chartContainer}>
-              <CountryChart logs={recentLogs} />
-            </div>
-          </div>
-        );
-      })}
-      {Object.entries(cityLogs).map(([cityCode, logs]) => {
-        const recentLogs = logs.slice(-20);
-        const cityName = countryNames[cityCode] || cityCode;
-        const countryCode = cityCode.split("-");
-        return (
-          <div key={cityCode} className={styles.countryChart}>
-            <div className={styles.countryHeader}>
-              <ReactCountryFlag
-                countryCode={countryCode[0]}
-                svg
-                style={{
-                  width: "24px",
-                  height: "16px",
-                  borderRadius: "5px",
-                }}
-                title={cityName}
-              />
-              <p className={styles.countryName}>{cityName}</p>
-            </div>
-            <div className={styles.chartContainer}>
-              <CountryChart logs={recentLogs} lineColor="#82ca9d" />
+              <CountryChart cityLogs={cityLogs} limit={limit} />
             </div>
           </div>
         );

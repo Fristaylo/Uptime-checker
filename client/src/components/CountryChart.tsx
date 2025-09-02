@@ -26,36 +26,68 @@ interface Log {
   packet_loss: number;
 }
 
-interface CountryChartProps {
-  logs: Log[];
-  lineColor?: string;
+interface Log {
+  rtt_avg: number;
+  created_at: string;
+  packet_loss: number;
 }
 
-const CountryChart = ({
-  logs,
-  lineColor = "#d4af37",
-}: CountryChartProps) => {
-  const chartData = {
-    labels: logs.map((log) =>
-      new Date(log.created_at).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+interface CityPingLogs {
+  [city: string]: Log[];
+}
+
+interface CountryChartProps {
+  cityLogs: CityPingLogs;
+  limit: number;
+}
+
+const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
+
+const CountryChart = ({ cityLogs, limit }: CountryChartProps) => {
+  const allLogs = Object.values(cityLogs).flat();
+  const labels = [
+    ...new Set(
+      allLogs.map((log: Log) =>
+        new Date(log.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      )
     ),
-    datasets: [
-      {
-        label: "Milliseconds",
-        data: logs.map((log) => log.rtt_avg),
-        borderColor: lineColor,
-        backgroundColor: "rgba(212, 175, 55, 0.2)",
-        pointBackgroundColor: lineColor,
-        pointBorderColor: "#fff",
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        tension: 0.4,
-        fill: true,
-      },
-    ],
+  ]
+    .sort()
+    .slice(-limit);
+
+  const datasets = Object.entries(cityLogs).map(([city, logs], index) => {
+    const color = lineColors[index % lineColors.length];
+    const dataMap = new Map(
+      (logs as Log[]).slice(-limit).map((log: Log) => [
+        new Date(log.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        log.rtt_avg,
+      ])
+    );
+
+    return {
+      label: city,
+      data: labels.map((label) => dataMap.get(label) || null),
+      borderColor: color,
+      backgroundColor: `${color}33`, // Add alpha for fill
+      pointBackgroundColor: color,
+      pointBorderColor: "#fff",
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      tension: 0.4,
+      fill: true,
+      spanGaps: true,
+    };
+  });
+
+  const chartData = {
+    labels,
+    datasets,
   };
 
   const options = {
@@ -151,7 +183,18 @@ const CountryChart = ({
         },
         callbacks: {
           label: function (context: any) {
-            const log = logs[context.dataIndex];
+            const city = context.dataset.label;
+            const allLogsForCity = cityLogs[city] || [];
+            const log = allLogsForCity.find(
+              (l: Log) =>
+                new Date(l.created_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }) === context.label
+            );
+
+            if (!log) return "";
+
             return [
               `RTT: ${context.parsed.y.toFixed(2)} ms`,
               `Packet Loss: ${log.packet_loss}%`,

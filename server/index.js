@@ -37,21 +37,26 @@ const createTable = async () => {
 app.get("/logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
-    SELECT
-      country as location_key,
-      json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
-    FROM
-      ping_logs
-    WHERE
-      created_at >= NOW() - interval '1 day'
-    GROUP BY
-      location_key;
+      SELECT
+        country,
+        city,
+        json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
+      FROM
+        ping_logs
+      WHERE
+        created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+      GROUP BY
+        country, city;
     `);
-    const logsByLocation = rows.reduce((acc, row) => {
-      acc[row.location_key] = row.logs;
+    const logsByCountryCity = rows.reduce((acc, row) => {
+      if (!acc[row.country]) {
+        acc[row.country] = {};
+      }
+      acc[row.country][row.city] = row.logs;
       return acc;
     }, {});
-    res.json(logsByLocation);
+    console.log("Sending data to client:", JSON.stringify(logsByCountryCity, null, 2));
+    res.json(logsByCountryCity);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
@@ -61,12 +66,10 @@ app.get("/logs", async (req, res) => {
 const pingAndSave = async () => {
   const target = "site.yummyani.me";
   const locations = [
-    { country: "RU" },
-    { country: "UA" },
-    { country: "LV" },
-    { country: "LT" },
-    { country: "EE" },
-    { country: "KZ" },
+    { country: "LV", city: "Riga" },
+    { country: "LT", city: "Vilnius" },
+    { country: "EE", city: "Tallinn" },
+    { country: "KZ", city: "Astana" },
     { country: "RU", city: "Moscow" },
     { country: "RU", city: "Saint Petersburg" },
     { country: "UA", city: "Kyiv" },
