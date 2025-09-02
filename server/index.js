@@ -1,7 +1,6 @@
 const express = require("express");
 const pool = require("./db");
 const fetch = require("node-fetch");
-const path = require("path");
 const app = express();
 const port = 3000;
 
@@ -55,7 +54,7 @@ const createHttpTable = async () => {
   }
 };
 
-app.get("/api/logs", async (req, res) => {
+app.get("/logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
@@ -83,7 +82,7 @@ app.get("/api/logs", async (req, res) => {
   }
 });
 
-app.get("/api/http-logs", async (req, res) => {
+app.get("/http-logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
@@ -381,15 +380,6 @@ const httpCheckAndSave = async () => {
     console.error("Failed to complete HTTP measurement cycle:", err.message);
   }
 };
-
-// Serve static files from the React app after API routes
-app.use(express.static(path.join(__dirname, "../client/dist")));
-
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-});
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
