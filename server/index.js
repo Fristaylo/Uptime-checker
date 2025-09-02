@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require("express");
 const pool = require("./db");
 const fetch = require("node-fetch");
@@ -113,6 +112,7 @@ app.get("/http-logs", async (req, res) => {
 });
 
 const pingAndSave = async () => {
+  console.log(`--- Starting PING check cycle at ${new Date().toISOString()} ---`);
   const target = "site.yummyani.me";
   const locations = [
     { country: "RU", city: "Moscow" },
@@ -157,6 +157,7 @@ const pingAndSave = async () => {
     }
 
     const { id } = await createMeasurementResponse.json();
+    console.log(`[PING] Measurement created with ID: ${id}`);
 
     // Step 2 & 3: Poll for the measurement result until it's finished
     let resultData;
@@ -235,12 +236,14 @@ const pingAndSave = async () => {
 
       await pool.query(query, values);
     }
+    console.log(`--- PING check cycle for measurement ${id} completed. ---`);
   } catch (err) {
     console.error("Failed to complete ping measurement cycle:", err.message);
   }
 };
 
 const httpCheckAndSave = async () => {
+  console.log(`--- Starting HTTP check cycle at ${new Date().toISOString()} ---`);
   const target = "site.yummyani.me";
   const locations = [
     { country: "RU", city: "Moscow" },
@@ -269,12 +272,12 @@ const httpCheckAndSave = async () => {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          target: {
-            target,
-            protocol: "HTTPS",
-          },
+          target: target,
           locations: locations.map((location) => ({ ...location, limit: 1 })),
           type: "http",
+          measurementOptions: {
+            protocol: "HTTPS",
+          },
         }),
       }
     );
@@ -288,7 +291,7 @@ const httpCheckAndSave = async () => {
     }
 
     const { id } = await createMeasurementResponse.json();
-    console.log(`Measurement created with ID: ${id}`);
+    console.log(`[HTTP] Measurement created with ID: ${id}`);
 
     // Step 2 & 3: Poll for the measurement result until it's finished
     let resultData;
@@ -321,7 +324,6 @@ const httpCheckAndSave = async () => {
       throw new Error(`Measurement ${id} did not complete in time.`);
     }
 
-    console.log(`--- HTTP results at ${new Date().toISOString()} ---`);
     for (const result of resultData.results) {
       const { probe, result: httpResult } = result;
       let values;
@@ -364,7 +366,7 @@ const httpCheckAndSave = async () => {
 
       await pool.query(query, values);
     }
-    console.log(`--- End of HTTP results ---`);
+    console.log(`--- HTTP check cycle for measurement ${id} completed. ---`);
   } catch (err) {
     console.error("Failed to complete HTTP measurement cycle:", err.message);
   }
