@@ -34,6 +34,28 @@ const createTable = async () => {
   }
 };
 
+const createHttpTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS http_logs (
+      id SERIAL PRIMARY KEY,
+      probe_id VARCHAR(255),
+      country VARCHAR(2),
+      city VARCHAR(255),
+      asn INT,
+      network VARCHAR(255),
+      status_code INT,
+      ttfb FLOAT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+  try {
+    await pool.query(query);
+    console.log('Table "http_logs" created or already exists.');
+  } catch (err) {
+    console.error("Error creating table", err);
+  }
+};
+
 app.get("/logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -43,6 +65,35 @@ app.get("/logs", async (req, res) => {
         json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
       FROM
         ping_logs
+      WHERE
+        created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+      GROUP BY
+        country, city;
+    `);
+    const logsByCountryCity = rows.reduce((acc, row) => {
+      if (!acc[row.country]) {
+        acc[row.country] = {};
+      }
+      acc[row.country][row.city] = row.logs;
+      return acc;
+    }, {});
+    console.log("Sending data to client:", JSON.stringify(logsByCountryCity, null, 2));
+    res.json(logsByCountryCity);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server Error");
+  }
+});
+
+app.get("/http-logs", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        country,
+        city,
+        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'ttfb', ttfb) ORDER BY created_at ASC) as logs
+      FROM
+        http_logs
       WHERE
         created_at >= NOW() - interval '1 day' AND city IS NOT NULL
       GROUP BY
@@ -202,9 +253,139 @@ const pingAndSave = async () => {
   }
 };
 
+const httpCheckAndSave = async () => {
+  const target = "site.yummyani.me";
+  const locations = [
+    { country: "RU", city: "Moscow" },
+    { country: "RU", city: "Saint Petersburg" },
+    { country: "UA", city: "Kyiv" },
+    { country: "UA", city: "Lviv" },
+    { country: "KZ", city: "Astana" },
+    { country: "LV", city: "Riga" },
+    { country: "LT", city: "Vilnius" },
+    { country: "EE", city: "Tallinn" },
+  ];
+  const apiKey = process.env.GLOBALPING_API_KEY;
+
+  if (!target) {
+    console.error("Target is not defined");
+    return;
+  }
+  try {
+    // Step 1: Create the measurement
+    const createMeasurementResponse = await fetch(
+      "https://api.globalping.io/v1/measurements",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          target,
+          locations: locations.map((location) => ({ ...location, limit: 1 })),
+          type: "http",
+        }),
+      }
+    );
+
+    if (!createMeasurementResponse.ok) {
+      const errorBody = await createMeasurementResponse.text();
+      console.error(
+        `Failed to create measurement: ${createMeasurementResponse.status} ${createMeasurementResponse.statusText}. Body: ${errorBody}`
+      );
+      return;
+    }
+
+    const { id } = await createMeasurementResponse.json();
+    console.log(`Measurement created with ID: ${id}`);
+
+    // Step 2 & 3: Poll for the measurement result until it's finished
+    let resultData;
+    const startTime = Date.now();
+    const timeout = 30000; // 30 seconds timeout
+
+    while (Date.now() - startTime < timeout) {
+      const getResultResponse = await fetch(
+        `https://api.globalping.io/v1/measurements/${id}`
+      );
+
+      if (!getResultResponse.ok) {
+        if (getResultResponse.status >= 500) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          continue;
+        }
+        throw new Error(`HTTP error! status: ${getResultResponse.status}`);
+      }
+
+      resultData = await getResultResponse.json();
+
+      if (resultData.status === "finished") {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+
+    if (!resultData || resultData.status !== "finished") {
+      throw new Error(`Measurement ${id} did not complete in time.`);
+    }
+
+    console.log(`--- HTTP results at ${new Date().toISOString()} ---`);
+    for (const result of resultData.results) {
+      const { probe, result: httpResult } = result;
+      let values;
+
+      if (httpResult.status === "finished") {
+        console.log(
+          `[SUCCESS] HTTP check to ${probe.city}, ${probe.country}: Status ${httpResult.statusCode}`
+        );
+        values = [
+          id,
+          probe.country,
+          probe.city,
+          probe.asn,
+          probe.network,
+          httpResult.statusCode,
+          httpResult.timings.total,
+        ];
+      } else {
+        console.log(
+          `[FAILURE] HTTP check to ${probe.city}, ${
+            probe.country
+          }: Status ${httpResult.status.toUpperCase()}`
+        );
+        values = [
+          id,
+          probe.country,
+          probe.city,
+          probe.asn,
+          probe.network,
+          null,
+          null,
+        ];
+      }
+
+      const query = `
+      INSERT INTO http_logs (
+        probe_id, country, city, asn, network, status_code, ttfb
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `;
+
+      await pool.query(query, values);
+    }
+    console.log(`--- End of HTTP results ---`);
+  } catch (err) {
+    console.error("Failed to complete HTTP measurement cycle:", err.message);
+  }
+};
+
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
   createTable();
+  createHttpTable();
   pingAndSave(); // Run once on startup
+  httpCheckAndSave(); // Run once on startup
   setInterval(pingAndSave, 120000); // Run every 2 minutes
+  setInterval(httpCheckAndSave, 120000); // Run every 2 minutes
 });

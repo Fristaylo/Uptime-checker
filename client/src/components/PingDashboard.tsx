@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import styles from "./PingDashboard.module.scss";
 import CountryChart from "./CountryChart";
+import HttpDashboard from "./HttpDashboard";
 import ReactCountryFlag from "react-country-flag";
 
 interface PingLog {
@@ -32,6 +33,7 @@ const PingDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState(20);
+  const [view, setView] = useState('ping');
 
   const fetchLogs = async () => {
     try {
@@ -62,6 +64,8 @@ const PingDashboard = () => {
       <div className={styles.header}>
         <h2>Статус yummyani.me</h2>
         <div className={styles.controls}>
+          <button onClick={() => setView('ping')}>Ping</button>
+          <button onClick={() => setView('http')}>HTTP</button>
           <label htmlFor="limit-select">Точек на графике:</label>
           <select
             id="limit-select"
@@ -75,33 +79,37 @@ const PingDashboard = () => {
           </select>
         </div>
       </div>
-      <div className={styles.chartsGrid}>
-        {Object.entries(logs)
-          .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
-          .map(([countryCode, cityLogs]) => {
-            const countryName = countryNames[countryCode] || countryCode;
-            return (
-              <div key={countryCode} className={styles.countryChart}>
-                <div className={styles.countryHeader}>
-                  <ReactCountryFlag
-                    countryCode={countryCode}
-                    svg
-                    style={{
-                      width: "24px",
-                      height: "16px",
-                      borderRadius: "5px",
-                    }}
-                    title={countryName}
-                  />
-                  <p className={styles.countryName}>{countryName}</p>
+      {view === 'ping' ? (
+        <div className={styles.chartsGrid}>
+          {Object.entries(logs)
+            .sort(([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b))
+            .map(([countryCode, cityLogs]) => {
+              const countryName = countryNames[countryCode] || countryCode;
+              return (
+                <div key={countryCode} className={styles.countryChart}>
+                  <div className={styles.countryHeader}>
+                    <ReactCountryFlag
+                      countryCode={countryCode}
+                      svg
+                      style={{
+                        width: "24px",
+                        height: "16px",
+                        borderRadius: "5px",
+                      }}
+                      title={countryName}
+                    />
+                    <p className={styles.countryName}>{countryName}</p>
+                  </div>
+                  <div className={styles.chartContainer}>
+                    <CountryChart cityLogs={cityLogs} limit={limit} />
+                  </div>
                 </div>
-                <div className={styles.chartContainer}>
-                  <CountryChart cityLogs={cityLogs} limit={limit} />
-                </div>
-              </div>
-            );
-          })}
-      </div>
+              );
+            })}
+        </div>
+      ) : (
+        <HttpDashboard />
+      )}
     </div>
   );
 };
