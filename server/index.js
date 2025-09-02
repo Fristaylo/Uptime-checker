@@ -282,7 +282,10 @@ const httpCheckAndSave = async () => {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          target,
+          target: {
+            target,
+            protocol: "HTTPS",
+          },
           locations: locations.map((location) => ({ ...location, limit: 1 })),
           type: "http",
         }),
