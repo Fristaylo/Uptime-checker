@@ -37,16 +37,28 @@ const createTable = async () => {
 app.get("/logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT country, json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
-      FROM ping_logs
-      WHERE created_at >= NOW() - interval '1 day'
-      GROUP BY country;
+    SELECT
+      CASE
+        WHEN city IN ('Moscow', 'Kyiv') THEN country || '-' ||
+          CASE
+            WHEN city = 'Moscow' THEN 'MOW'
+            WHEN city = 'Kyiv' THEN 'IEV'
+          END
+        ELSE country
+      END as location_key,
+      json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
+    FROM
+      ping_logs
+    WHERE
+      created_at >= NOW() - interval '1 day'
+    GROUP BY
+      location_key;
     `);
-    const logsByCountry = rows.reduce((acc, row) => {
-      acc[row.country] = row.logs;
+    const logsByLocation = rows.reduce((acc, row) => {
+      acc[row.location_key] = row.logs;
       return acc;
     }, {});
-    res.json(logsByCountry);
+    res.json(logsByLocation);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
@@ -55,7 +67,16 @@ app.get("/logs", async (req, res) => {
 
 const pingAndSave = async () => {
   const target = "site.yummyani.me";
-  const countries = ["RU", "UA", "LV", "LT", "EE", "KZ"];
+  const locations = [
+    { country: "RU" },
+    { country: "UA" },
+    { country: "LV" },
+    { country: "LT" },
+    { country: "EE" },
+    { country: "KZ" },
+    { country: "RU", city: "Moscow" },
+    { country: "UA", city: "Kyiv" },
+  ];
   const apiKey = process.env.GLOBALPING_API_KEY;
 
   if (!target) {
@@ -74,7 +95,7 @@ const pingAndSave = async () => {
         },
         body: JSON.stringify({
           target,
-          locations: countries.map((country) => ({ country, limit: 1 })),
+          locations: locations.map((location) => ({ ...location, limit: 1 })),
           type: "ping",
         }),
       }

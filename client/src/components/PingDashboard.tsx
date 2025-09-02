@@ -11,7 +11,9 @@ interface PingLog {
 
 const countryNames: Record<string, string> = {
   RU: "Россия",
+  "RU-MOW": "Россия - Москва",
   UA: "Украина",
+  "UA-IEV": "Украина - Киев",
   LV: "Латвия",
   LT: "Литва",
   EE: "Эстония",
@@ -59,10 +61,21 @@ const PingDashboard = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const cityLogs: Record<string, PingLog[]> = {};
+  const countryLogs: Record<string, PingLog[]> = {};
+
+  Object.entries(logsByCountry).forEach(([key, logs]) => {
+    if (key.includes("-")) {
+      cityLogs[key] = logs;
+    } else {
+      countryLogs[key] = logs;
+    }
+  });
+
   return (
     <div className={styles.pingDashboard}>
       <h2>Статус yummyani.me</h2>
-      {Object.entries(logsByCountry).map(([countryCode, logs]) => {
+      {Object.entries(countryLogs).map(([countryCode, logs]) => {
         const recentLogs = logs.slice(-20);
         const countryName = countryNames[countryCode] || countryCode;
         return (
@@ -82,6 +95,35 @@ const PingDashboard = () => {
             </div>
             <div className={styles.chartContainer}>
               <CountryChart country={countryName} logs={recentLogs} />
+            </div>
+          </div>
+        );
+      })}
+      {Object.entries(cityLogs).map(([cityCode, logs]) => {
+        const recentLogs = logs.slice(-20);
+        const cityName = countryNames[cityCode] || cityCode;
+        const countryCode = cityCode.split("-");
+        return (
+          <div key={cityCode} className={styles.countryChart}>
+            <div className={styles.countryHeader}>
+              <ReactCountryFlag
+                countryCode={countryCode[0]}
+                svg
+                style={{
+                  width: "24px",
+                  height: "16px",
+                  borderRadius: "5px",
+                }}
+                title={cityName}
+              />
+              <p className={styles.countryName}>{cityName}</p>
+            </div>
+            <div className={styles.chartContainer}>
+              <CountryChart
+                country={cityName}
+                logs={recentLogs}
+                lineColor="#82ca9d"
+              />
             </div>
           </div>
         );

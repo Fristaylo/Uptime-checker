@@ -29,9 +29,14 @@ interface Log {
 interface CountryChartProps {
   country: string;
   logs: Log[];
+  lineColor?: string;
 }
 
-const CountryChart = ({ country, logs }: CountryChartProps) => {
+const CountryChart = ({
+  country,
+  logs,
+  lineColor = "#d4af37",
+}: CountryChartProps) => {
   const chartData = {
     labels: logs.map((log) =>
       new Date(log.created_at).toLocaleTimeString([], {
@@ -43,9 +48,9 @@ const CountryChart = ({ country, logs }: CountryChartProps) => {
       {
         label: "Milliseconds",
         data: logs.map((log) => log.rtt_avg),
-        borderColor: "#d4af37",
+        borderColor: lineColor,
         backgroundColor: "rgba(212, 175, 55, 0.2)",
-        pointBackgroundColor: "#d4af37",
+        pointBackgroundColor: lineColor,
         pointBorderColor: "#fff",
         pointRadius: 5,
         pointHoverRadius: 7,
