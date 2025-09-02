@@ -4,6 +4,13 @@ const fetch = require("node-fetch");
 const app = express();
 const port = 3000;
 
+console.log("Reading GLOBALPING_API_KEY on startup...");
+if (process.env.GLOBALPING_API_KEY) {
+  console.log("GLOBALPING_API_KEY is set.");
+} else {
+  console.log("GLOBALPING_API_KEY is NOT SET or is empty.");
+}
+
 app.use(express.json());
 
 const createTable = async () => {
@@ -124,7 +131,7 @@ const pingAndSave = async () => {
     { country: "LT", city: "Vilnius" },
     { country: "EE", city: "Tallinn" },
   ];
-  const apiKey = process.env.VITE_GLOBALPING_API_KEY;
+  const apiKey = process.env.GLOBALPING_API_KEY;
 
   if (!target) {
     console.error("Target is not defined");
@@ -257,7 +264,7 @@ const httpCheckAndSave = async () => {
     { country: "LT", city: "Vilnius" },
     { country: "EE", city: "Tallinn" },
   ];
-  const apiKey = process.env.VITE_GLOBALPING_API_KEY;
+  const apiKey = process.env.GLOBALPING_API_KEY;
 
   if (!target) {
     console.error("Target is not defined");
