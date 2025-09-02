@@ -34,14 +34,8 @@ const createTable = async () => {
 };
 
 const createHttpTable = async () => {
-  const checkColumnQuery = `
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_name='http_logs' AND column_name='dns';
-  `;
-
   const createTableQuery = `
-    CREATE TABLE http_logs (
+    CREATE TABLE IF NOT EXISTS http_logs (
       id SERIAL PRIMARY KEY,
       probe_id VARCHAR(255),
       country VARCHAR(2),
@@ -50,37 +44,32 @@ const createHttpTable = async () => {
       network VARCHAR(255),
       status_code INT,
       ttfb FLOAT,
-      dns FLOAT,
-      tcp FLOAT,
-      tls FLOAT,
-      first_byte FLOAT,
-      download FLOAT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
 
+  const columns = [
+    { name: "dns", type: "FLOAT" },
+    { name: "tcp", type: "FLOAT" },
+    { name: "tls", type: "FLOAT" },
+    { name: "first_byte", type: "FLOAT" },
+    { name: "download", type: "FLOAT" },
+  ];
+
   try {
-    const { rows } = await pool.query(checkColumnQuery);
-    if (rows.length === 0) {
-      console.log('Column "dns" not found in "http_logs", recreating table.');
-      await pool.query('DROP TABLE IF EXISTS http_logs;');
-      await pool.query(createTableQuery);
-      console.log('Table "http_logs" recreated.');
-    } else {
-      console.log('Table "http_logs" already has the new schema.');
+    await pool.query(createTableQuery);
+    console.log('Table "http_logs" created or already exists.');
+
+    for (const column of columns) {
+      const alterQuery = `
+        ALTER TABLE http_logs
+        ADD COLUMN IF NOT EXISTS ${column.name} ${column.type};
+      `;
+      await pool.query(alterQuery);
     }
+    console.log('Table "http_logs" schema updated.');
   } catch (err) {
-    // If the table doesn't exist at all, an error will be thrown. Create it.
-    if (err.code === '42P01') {
-      try {
-        await pool.query(createTableQuery);
-        console.log('Table "http_logs" created.');
-      } catch (createErr) {
-        console.error("Error creating table", createErr);
-      }
-    } else {
-      console.error("Error checking or creating table", err);
-    }
+    console.error("Error creating or altering table", err);
   }
 };
 
