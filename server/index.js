@@ -55,7 +55,7 @@ const createHttpTable = async () => {
   }
 };
 
-app.get("/logs", async (req, res) => {
+app.get("/api/logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
@@ -83,7 +83,7 @@ app.get("/logs", async (req, res) => {
   }
 });
 
-app.get("/http-logs", async (req, res) => {
+app.get("/api/http-logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT

@@ -8,7 +8,7 @@ const HttpDashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('/http-logs');
+        const response = await axios.get('/api/http-logs');
         console.log('Received data:', response.data); // Log the data to the browser console
         setData(response.data);
       } catch (error) {

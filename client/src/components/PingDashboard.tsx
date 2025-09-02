@@ -37,7 +37,7 @@ const PingDashboard = () => {
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch("/logs");
+      const response = await fetch("/api/logs");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
