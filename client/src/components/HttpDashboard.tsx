@@ -9,17 +9,8 @@ const HttpDashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get('/http-logs');
-        const formattedData = response.data;
-        // Format the timestamp for better chart readability
-        for (const country in formattedData) {
-          for (const city in formattedData[country]) {
-            formattedData[country][city] = formattedData[country][city].map((log: any) => ({
-              ...log,
-              created_at: new Date(log.created_at).toLocaleTimeString(),
-            }));
-          }
-        }
-        setData(formattedData);
+        console.log('Received data:', response.data); // Log the data to the browser console
+        setData(response.data);
       } catch (error) {
         console.error('Error fetching HTTP logs:', error);
       }
