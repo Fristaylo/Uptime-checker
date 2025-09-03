@@ -81,23 +81,28 @@ app.get("/logs", async (req, res) => {
       SELECT
         country,
         city,
-        json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
+        rtt_avg,
+        created_at,
+        packet_loss
       FROM
         ranked_logs
       WHERE
         rn <= $1
-      GROUP BY
-        country, city;
+      ORDER BY created_at ASC;
     `,
       [limit]
     );
-    const logsByCountryCity = rows.reduce((acc, row) => {
-      if (!acc[row.country]) {
-        acc[row.country] = {};
+    const logsByCountryCity = {};
+    for (const row of rows) {
+      const { country, city, ...logData } = row;
+      if (!logsByCountryCity[country]) {
+        logsByCountryCity[country] = {};
       }
-      acc[row.country][row.city] = row.logs;
-      return acc;
-    }, {});
+      if (!logsByCountryCity[country][city]) {
+        logsByCountryCity[country][city] = [];
+      }
+      logsByCountryCity[country][city].push(logData);
+    }
     res.json(logsByCountryCity);
   } catch (err) {
     console.error(err);
