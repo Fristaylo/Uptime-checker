@@ -93,7 +93,7 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
       borderColor: color,
       backgroundColor: `${color}33`,
       pointBackgroundColor: color,
-      pointRadius: 3,
+      pointRadius: 0,
       pointHoverRadius: 7,
       pointHitRadius: 20,
       tension: 0.4,
@@ -130,13 +130,114 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
         labels: {
           color: "#d4d4d4",
           usePointStyle: true,
-          pointStyle: "line",
+          pointStyle: "circle",
         },
       },
       title: {
         display: false,
       },
       tooltip: {
+        enabled: false,
+        external: function (context: any) {
+          let tooltipEl = document.getElementById("chartjs-tooltip");
+
+          if (!tooltipEl) {
+            tooltipEl = document.createElement("div");
+            tooltipEl.id = "chartjs-tooltip";
+            tooltipEl.innerHTML = "<table></table>";
+            document.body.appendChild(tooltipEl);
+          }
+
+          const tooltipModel = context.tooltip;
+          if (tooltipModel.opacity === 0) {
+            tooltipEl.style.opacity = "0";
+            return;
+          }
+
+          tooltipEl.classList.remove("above", "below", "no-transform");
+          if (tooltipModel.yAlign) {
+            tooltipEl.classList.add(tooltipModel.yAlign);
+          } else {
+            tooltipEl.classList.add("no-transform");
+          }
+
+          function getBody(bodyItem: any) {
+            return bodyItem.lines;
+          }
+
+          if (tooltipModel.body) {
+            const titleLines = tooltipModel.title || [];
+            const bodyLines = tooltipModel.body.map(getBody);
+
+            let innerHtml = "<thead>";
+
+            titleLines.forEach(function (title: any) {
+              innerHtml += "<tr><th>" + title + "</th></tr>";
+            });
+            innerHtml += "</thead><tbody>";
+
+            bodyLines.forEach(function (body: any, i: any) {
+              const colors = tooltipModel.labelColors[i];
+              let style = "background:" + colors.borderColor;
+              style += "; border-color:" + colors.borderColor;
+              style += "; border-width: 2px";
+              style += "; margin-right: 5px";
+              style += "; height: 10px";
+              style += "; width: 10px";
+              style += "; display: inline-block";
+              style += "; border-radius: 50%";
+              const span = '<span style="' + style + '"></span>';
+              innerHtml += "<tr><td>" + span + body + "</td></tr>";
+            });
+            innerHtml += "</tbody>";
+
+            let table = tooltipEl.querySelector("table");
+            if (table) {
+              table.innerHTML = innerHtml;
+            }
+          }
+
+          const chart = context.chart;
+          const position = chart.canvas.getBoundingClientRect();
+
+          tooltipEl.style.opacity = "1";
+          tooltipEl.style.position = "absolute";
+          tooltipEl.style.fontFamily = tooltipModel.options.bodyFont.family;
+          tooltipEl.style.fontSize = tooltipModel.options.bodyFont.size + "px";
+          tooltipEl.style.fontStyle = tooltipModel.options.bodyFont.style;
+          tooltipEl.style.padding =
+            tooltipModel.padding + "px " + tooltipModel.padding + "px";
+          tooltipEl.style.pointerEvents = "none";
+          tooltipEl.style.backgroundColor = "rgba(51, 51, 51, 1)";
+          tooltipEl.style.borderRadius = "5px";
+          tooltipEl.style.color = "white";
+          tooltipEl.style.maxWidth = "500px";
+          tooltipEl.style.whiteSpace = "normal";
+          tooltipEl.style.wordWrap = "break-word";
+          tooltipEl.style.padding = "5px";
+
+          let left = position.left + window.pageXOffset + tooltipModel.caretX;
+          let top = position.top + window.pageYOffset - 70; // Fixed top position
+
+          // Center the tooltip horizontally
+          left -= tooltipEl.offsetWidth / 2;
+
+          // Prevent the tooltip from going off the left side of the chart
+          if (left < position.left + window.pageXOffset) {
+            left = position.left + window.pageXOffset;
+          }
+
+          // Prevent the tooltip from going off the right side of the chart
+          if (
+            left + tooltipEl.offsetWidth >
+            position.right + window.pageXOffset
+          ) {
+            left = position.right + window.pageXOffset - tooltipEl.offsetWidth;
+          }
+
+          tooltipEl.style.left = left + "px";
+          tooltipEl.style.top = top + "px";
+        },
         titleFont: {
           size: 16,
         },
@@ -163,24 +264,21 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
             if (!log) return "";
 
             if (dataType === "ping") {
-              return [
-                city,
-                `Пинг: ${context.parsed.y.toFixed(0)}мс`,
-                `Потеря пакетов: ${log.packet_loss}%`,
-              ];
+              return `${city} | Пинг: ${context.parsed.y.toFixed(
+                0
+              )}мс | Потеря пакетов: ${log.packet_loss}%`;
             } else {
               const tooltipLines = [
                 city,
                 `Общее время: ${context.parsed.y.toFixed(0)}мс`,
                 `Статус: ${log.status_code}`,
-                "---",
                 `DNS: ${log.dns_time}мс`,
                 `TCP: ${log.tcp_time}мс`,
                 `TLS: ${log.tls_time}мс`,
                 `Первый байт: ${log.first_byte_time}мс`,
                 `Загрузка: ${log.download_time}мс`,
               ];
-              return tooltipLines;
+              return tooltipLines.join(" | ");
             }
           },
         },
@@ -188,8 +286,8 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
       crosshair: {
         enabled: true,
         line: {
-          color: "#d4d4d4",
-          width: 1,
+          color: "#818181ff",
+          width: 2,
           dashPattern: [6, 6],
         },
         snap: {
