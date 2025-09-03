@@ -94,7 +94,7 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
 
       return {
         x: parseInt(key),
-        y: avgValue,
+        y: isNaN(avgValue) ? null : avgValue,
         packet_loss: avgPacketLoss,
         status_code: representativeLog.status_code,
         dns_time: representativeLog.dns_time,
@@ -205,27 +205,29 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
 
             titleLines.forEach(function (index: number) {
               const dp = tooltipModel.dataPoints[index];
-              const formattedDate = new Date(dp.parsed.x).toLocaleDateString(
-                "ru-RU",
-                {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                }
-              );
-              const formattedTime = new Date(dp.parsed.x).toLocaleTimeString(
-                "ru-RU",
-                {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
-              );
-              innerHtml +=
-                "<tr><th>" +
-                formattedDate +
-                " в " +
-                formattedTime +
-                "</th></tr>";
+              if (dp.parsed) {
+                const formattedDate = new Date(dp.parsed.x).toLocaleDateString(
+                  "ru-RU",
+                  {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  }
+                );
+                const formattedTime = new Date(dp.parsed.x).toLocaleTimeString(
+                  "ru-RU",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                );
+                innerHtml +=
+                  "<tr><th>" +
+                  formattedDate +
+                  " в " +
+                  formattedTime +
+                  "</th></tr>";
+              }
             });
             innerHtml += "</thead><tbody>";
 
@@ -305,13 +307,18 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
             if (!log) return "";
 
             if (dataType === "ping") {
+              if (context.parsed.y === null) {
+                return `${city} | Нет данных`;
+              }
               return `${city} | Пинг: ${context.parsed.y.toFixed(
                 0
               )}мс | Потеря пакетов: ${log.packet_loss}%`;
             } else {
               const tooltipLines = [
                 city,
-                `Общее время: ${context.parsed.y.toFixed(0)}мс`,
+                `Общее время: ${
+                  context.parsed.y !== null ? context.parsed.y.toFixed(0) : "N/A"
+                }мс`,
                 `Статус: ${log.status_code}`,
                 `DNS: ${log.dns_time}мс`,
                 `TCP: ${log.tcp_time}мс`,
