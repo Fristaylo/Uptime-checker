@@ -28,6 +28,11 @@ interface Log {
   packet_loss?: number;
   total_time?: number;
   status_code?: number;
+  download_time?: number;
+  first_byte_time?: number;
+  dns_time?: number;
+  tls_time?: number;
+  tcp_time?: number;
 }
 
 interface CityLogs {
@@ -164,11 +169,18 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
                 `Потеря пакетов: ${log.packet_loss}%`,
               ];
             } else {
-              return [
+              const tooltipLines = [
                 city,
-                `Total time: ${context.parsed.y.toFixed(0)}мс`,
+                `Общее время: ${context.parsed.y.toFixed(0)}мс`,
                 `Статус: ${log.status_code}`,
+                "---",
+                `DNS: ${log.dns_time}мс`,
+                `TCP: ${log.tcp_time}мс`,
+                `TLS: ${log.tls_time}мс`,
+                `Первый байт: ${log.first_byte_time}мс`,
+                `Загрузка: ${log.download_time}мс`,
               ];
+              return tooltipLines;
             }
           },
         },

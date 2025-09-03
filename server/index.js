@@ -92,23 +92,23 @@ app.get("/http-logs", async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
-        country,
-        city,
-        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'total_time', total_time) ORDER BY created_at ASC) as logs
-      FROM
-        http_logs
-      WHERE
-        created_at >= NOW() - interval '1 day' AND city IS NOT NULL
-      GROUP BY
-        country, city;
+        country, city, status_code, created_at, total_time,
+        download_time, first_byte_time, dns_time, tls_time, tcp_time
+      FROM http_logs
+      WHERE created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+      ORDER BY created_at ASC;
     `);
-    const logsByCountryCity = rows.reduce((acc, row) => {
-      if (!acc[row.country]) {
-        acc[row.country] = {};
+    const logsByCountryCity = {};
+    for (const row of rows) {
+      const { country, city, ...logData } = row;
+      if (!logsByCountryCity[country]) {
+        logsByCountryCity[country] = {};
       }
-      acc[row.country][row.city] = row.logs;
-      return acc;
-    }, {});
+      if (!logsByCountryCity[country][city]) {
+        logsByCountryCity[country][city] = [];
+      }
+      logsByCountryCity[country][city].push(logData);
+    }
     res.json(logsByCountryCity);
   } catch (err) {
     console.error(err);
