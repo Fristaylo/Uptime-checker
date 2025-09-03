@@ -131,6 +131,10 @@ const pingAndSave = async () => {
     { country: "EE", city: "Tallinn" },
   ];
   const apiKey = process.env.GLOBALPING_API_KEY;
+  if (!apiKey) {
+    console.error("GLOBALPING_API_KEY is not set.");
+    return;
+  }
 
   if (!target) {
     console.error("Target is not defined");
@@ -265,6 +269,10 @@ const httpCheckAndSave = async () => {
     { country: "EE", city: "Tallinn" },
   ];
   const apiKey = process.env.GLOBALPING_API_KEY;
+  if (!apiKey) {
+    console.error("GLOBALPING_API_KEY is not set.");
+    return;
+  }
 
   if (!target) {
     console.error("Target is not defined");
@@ -349,7 +357,7 @@ const httpCheckAndSave = async () => {
           probe.asn,
           probe.network,
           httpResult.statusCode,
-          httpResult.timings.total,
+          httpResult.timings.ttfb,
         ];
       } else {
         console.log(
