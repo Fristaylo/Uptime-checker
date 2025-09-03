@@ -25,7 +25,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/uptime-checker:latest
           build-args: |
-            VITE_GLOBALPING_API_KEY=${{ secrets.VITE_GLOBALPING_API_KEY }}
+            GLOBALPING_API_KEY=${{ secrets.GLOBALPING_API_KEY }}
 
   deploy:
     needs: build-and-push
@@ -47,7 +47,7 @@ jobs:
             sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
             # Create .env file
-            echo "GLOBALPING_API_KEY=${{ secrets.VITE_GLOBALPING_API_KEY }}" > .env
+            echo "GLOBALPING_API_KEY=${{ secrets.GLOBALPING_API_KEY }}" > .env
             # Stop and disable system nginx if it exists
             sudo systemctl stop nginx || true
             sudo systemctl disable nginx || true
