@@ -10,6 +10,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import CrosshairPlugin from "chartjs-plugin-crosshair";
 
 ChartJS.register(
   CategoryScale,
@@ -19,7 +20,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  CrosshairPlugin
 );
 
 interface Log {
@@ -91,7 +93,7 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
       borderColor: color,
       backgroundColor: `${color}33`,
       pointBackgroundColor: color,
-      pointRadius: 5,
+      pointRadius: 3,
       pointHoverRadius: 7,
       pointHitRadius: 20,
       tension: 0.4,
@@ -128,7 +130,7 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
         labels: {
           color: "#d4d4d4",
           usePointStyle: true,
-          pointStyle: "circle",
+          pointStyle: "line",
         },
       },
       title: {
@@ -183,6 +185,27 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
           },
         },
       },
+      crosshair: {
+        enabled: true,
+        line: {
+          color: "#d4d4d4",
+          width: 1,
+          dashPattern: [6, 6],
+        },
+        snap: {
+          enabled: true,
+        },
+        sync: {
+          enabled: false,
+        },
+        zoom: {
+          enabled: false,
+        },
+      },
+    },
+    interaction: {
+      mode: "index" as const,
+      intersect: false,
     },
     scales: {
       y: {

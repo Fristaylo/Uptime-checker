@@ -14,7 +14,7 @@
 .chartsGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 15px;
 }
 
 @media (max-width: 950px) {
@@ -27,7 +27,6 @@
   background-color: #1d1d1d;
   padding: 15px;
   border-radius: 8px;
-  margin-bottom: 20px;
   display: flex;
   height: 300px;
   flex-direction: column;
@@ -84,4 +83,12 @@
 
 .red {
   background-color: #dc3545;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+  justify-content: center;
 }
