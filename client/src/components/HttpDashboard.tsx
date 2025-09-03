@@ -23,7 +23,7 @@ interface CountryLogs {
 
 interface HttpDashboardProps {
   logs: CountryLogs;
-  limit: number;
+  timeRange: string;
 }
 
 const countryNames: Record<string, string> = {
@@ -36,7 +36,7 @@ const countryNames: Record<string, string> = {
 };
 const countryOrder = ["RU", "UA", "KZ", "LV", "LT", "EE"];
 
-const HttpDashboard = ({ logs, limit }: HttpDashboardProps) => {
+const HttpDashboard = ({ logs, timeRange }: HttpDashboardProps) => {
   return (
     <div className={styles.chartsGrid}>
       {Object.entries(logs)
@@ -61,7 +61,7 @@ const HttpDashboard = ({ logs, limit }: HttpDashboardProps) => {
               <div className={styles.chartContainer}>
                 <CountryChart
                   cityLogs={cityLogs}
-                  limit={limit}
+                  timeRange={timeRange}
                   dataType="http"
                 />
               </div>

@@ -35,15 +35,15 @@ const PingDashboard = () => {
   const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [limit, setLimit] = useState(20);
+  const [timeRange, setTimeRange] = useState("hour");
   const [view, setView] = useState("ping");
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
       const [pingResponse, httpResponse] = await Promise.all([
-        fetch(`/logs?limit=${limit}`),
-        fetch(`/http-logs?limit=${limit}`),
+        fetch(`/logs?timeRange=${timeRange}`),
+        fetch(`/http-logs?timeRange=${timeRange}`),
       ]);
 
       if (!pingResponse.ok) {
@@ -69,7 +69,7 @@ const PingDashboard = () => {
     fetchLogs();
     const interval = setInterval(fetchLogs, 120000);
     return () => clearInterval(interval);
-  }, [limit]);
+  }, [timeRange]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -81,16 +81,16 @@ const PingDashboard = () => {
         <div className={styles.controls}>
           <button onClick={() => setView("ping")}>Ping</button>
           <button onClick={() => setView("http")}>HTTP</button>
-          <label htmlFor="limit-select">Точек на графике:</label>
+          <label htmlFor="timeRange-select">Выбор времени:</label>
           <select
-            id="limit-select"
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
+            id="timeRange-select"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
           >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
+            <option value="day">День</option>
+            <option value="4hours">4 часа</option>
+            <option value="hour">Час</option>
+            <option value="30minutes">30 минут</option>
           </select>
         </div>
       </div>
@@ -120,7 +120,7 @@ const PingDashboard = () => {
                   <div className={styles.chartContainer}>
                     <CountryChart
                       cityLogs={cityLogs}
-                      limit={limit}
+                      timeRange={timeRange}
                       dataType="ping"
                     />
                   </div>
@@ -129,7 +129,7 @@ const PingDashboard = () => {
             })}
         </div>
       ) : (
-        <HttpDashboard logs={httpLogs} limit={limit} />
+        <HttpDashboard logs={httpLogs} timeRange={timeRange} />
       )}
     </div>
   );

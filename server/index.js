@@ -62,22 +62,26 @@ const createHttpTable = async () => {
 
 app.get("/logs", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit, 10) || 100;
+    const { timeRange } = req.query;
+    let interval;
+    switch (timeRange) {
+      case "day":
+        interval = "1 day";
+        break;
+      case "4hours":
+        interval = "4 hour";
+        break;
+      case "hour":
+        interval = "1 hour";
+        break;
+      case "30minutes":
+        interval = "30 minute";
+        break;
+      default:
+        interval = "1 hour";
+    }
     const { rows } = await pool.query(
       `
-      WITH ranked_logs AS (
-        SELECT
-          country,
-          city,
-          rtt_avg,
-          created_at,
-          packet_loss,
-          ROW_NUMBER() OVER(PARTITION BY country, city ORDER BY created_at DESC) as rn
-        FROM
-          ping_logs
-        WHERE
-          created_at >= NOW() - interval '1 day' AND city IS NOT NULL
-      )
       SELECT
         country,
         city,
@@ -85,12 +89,12 @@ app.get("/logs", async (req, res) => {
         created_at,
         packet_loss
       FROM
-        ranked_logs
+        ping_logs
       WHERE
-        rn <= $1
+        created_at >= NOW() - $1::interval AND city IS NOT NULL
       ORDER BY created_at ASC;
     `,
-      [limit]
+      [interval]
     );
     const logsByCountryCity = {};
     for (const row of rows) {
@@ -112,24 +116,35 @@ app.get("/logs", async (req, res) => {
 
 app.get("/http-logs", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit, 10) || 100;
+    const { timeRange } = req.query;
+    let interval;
+    switch (timeRange) {
+      case "day":
+        interval = "1 day";
+        break;
+      case "4hours":
+        interval = "4 hour";
+        break;
+      case "hour":
+        interval = "1 hour";
+        break;
+      case "30minutes":
+        interval = "30 minute";
+        break;
+      default:
+        interval = "1 hour";
+    }
+
     const { rows } = await pool.query(
       `
-      WITH ranked_logs AS (
-        SELECT
-          *,
-          ROW_NUMBER() OVER(PARTITION BY country, city ORDER BY created_at DESC) as rn
-        FROM http_logs
-        WHERE created_at >= NOW() - interval '1 day' AND city IS NOT NULL
-      )
       SELECT
         country, city, status_code, created_at, total_time,
         download_time, first_byte_time, dns_time, tls_time, tcp_time
-      FROM ranked_logs
-      WHERE rn <= $1
+      FROM http_logs
+      WHERE created_at >= NOW() - $1::interval AND city IS NOT NULL
       ORDER BY created_at ASC;
     `,
-      [limit]
+      [interval]
     );
     const logsByCountryCity = {};
     for (const row of rows) {

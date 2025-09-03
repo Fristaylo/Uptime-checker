@@ -11,6 +11,7 @@ import {
   Filler,
 } from "chart.js";
 import CrosshairPlugin from "chartjs-plugin-crosshair";
+import { formatTime } from "../utils/timeUtils";
 
 ChartJS.register(
   CategoryScale,
@@ -43,7 +44,7 @@ interface CityLogs {
 
 interface CountryChartProps {
   cityLogs: CityLogs;
-  limit: number;
+  timeRange: string;
   dataType: "ping" | "http";
 }
 
@@ -60,17 +61,11 @@ const cityTranslations: { [key: string]: string } = {
   Tallinn: "Таллин",
 };
 
-const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
+const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
   const allLogs = Object.values(cityLogs).flat();
   const labels = [
     ...new Set(
-      allLogs.map((log: Log) =>
-        new Date(log.created_at).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        })
-      )
+      allLogs.map((log: Log) => formatTime(log.created_at, timeRange))
     ),
   ].sort();
 
@@ -78,11 +73,7 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
     const color = lineColors[index % lineColors.length];
     const dataMap = new Map(
       (logs as Log[]).map((log: Log) => [
-        new Date(log.created_at).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        }),
+        formatTime(log.created_at, timeRange),
         dataType === "ping" ? log.rtt_avg : log.total_time,
       ])
     );
@@ -119,6 +110,21 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
   const chartData = {
     labels,
     datasets: sortedDatasets,
+  };
+
+  const getMaxTicksLimit = () => {
+    switch (timeRange) {
+      case "day":
+        return 6;
+      case "4hours":
+        return 6;
+      case "hour":
+        return 6;
+      case "30minutes":
+        return 6;
+      default:
+        return 6;
+    }
   };
 
   const options = {
@@ -253,12 +259,7 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
               ) || city;
             const allLogsForCity = cityLogs[originalCity] || [];
             const log = allLogsForCity.find(
-              (l: Log) =>
-                new Date(l.created_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                }) === context.label
+              (l: Log) => formatTime(l.created_at, timeRange) === context.label
             );
 
             if (!log) return "";
@@ -322,7 +323,7 @@ const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
         },
         ticks: {
           color: "#d4d4d4",
-          maxTicksLimit: 6,
+          maxTicksLimit: getMaxTicksLimit(),
         },
       },
     },
