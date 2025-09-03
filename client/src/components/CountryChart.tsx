@@ -1,7 +1,6 @@
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
-  CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
@@ -9,12 +8,14 @@ import {
   Tooltip,
   Legend,
   Filler,
+  TimeScale,
+  TimeSeriesScale,
 } from "chart.js";
+import "chartjs-adapter-date-fns";
+import { ru } from "date-fns/locale";
 import CrosshairPlugin from "chartjs-plugin-crosshair";
-import { formatTime } from "../utils/timeUtils";
 
 ChartJS.register(
-  CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
@@ -22,9 +23,10 @@ ChartJS.register(
   Tooltip,
   Legend,
   Filler,
-  CrosshairPlugin
+  CrosshairPlugin,
+  TimeScale,
+  TimeSeriesScale
 );
-
 interface Log {
   rtt_avg?: number;
   created_at: string;
@@ -62,25 +64,50 @@ const cityTranslations: { [key: string]: string } = {
 };
 
 const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
-  const allLogs = Object.values(cityLogs).flat();
-  const labels = [
-    ...new Set(
-      allLogs.map((log: Log) => formatTime(log.created_at, timeRange))
-    ),
-  ].sort();
-
   const datasets = Object.entries(cityLogs).map(([city, logs], index) => {
     const color = lineColors[index % lineColors.length];
-    const dataMap = new Map(
-      (logs as Log[]).map((log: Log) => [
-        formatTime(log.created_at, timeRange),
-        dataType === "ping" ? log.rtt_avg : log.total_time,
-      ])
-    );
+    const groupedLogs = logs.reduce((acc, log) => {
+      const date = new Date(log.created_at);
+      date.setSeconds(0, 0);
+      const minuteKey = date.getTime();
+
+      if (!acc[minuteKey]) {
+        acc[minuteKey] = [];
+      }
+      acc[minuteKey].push(log);
+      return acc;
+    }, {} as { [key: number]: Log[] });
+
+    const data = Object.entries(groupedLogs).map(([key, group]) => {
+      const avgValue =
+        group.reduce(
+          (sum, log) =>
+            sum +
+            (dataType === "ping" ? log.rtt_avg || 0 : log.total_time || 0),
+          0
+        ) / group.length;
+      const avgPacketLoss =
+        group.reduce((sum, log) => sum + (log.packet_loss || 0), 0) /
+        group.length;
+      // Keep other metrics from the first log in the group for tooltip info
+      const representativeLog = group[0];
+
+      return {
+        x: parseInt(key),
+        y: avgValue,
+        packet_loss: avgPacketLoss,
+        status_code: representativeLog.status_code,
+        dns_time: representativeLog.dns_time,
+        tcp_time: representativeLog.tcp_time,
+        tls_time: representativeLog.tls_time,
+        first_byte_time: representativeLog.first_byte_time,
+        download_time: representativeLog.download_time,
+      };
+    });
 
     return {
       label: cityTranslations[city] || city,
-      data: labels.map((label) => dataMap.get(label) || null),
+      data: data,
       borderColor: color,
       backgroundColor: `${color}33`,
       pointBackgroundColor: color,
@@ -89,13 +116,13 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
       pointHitRadius: 20,
       tension: 0.4,
       fill: true,
-      spanGaps: true,
+      spanGaps: false,
     };
   });
 
   const sortedDatasets = [...datasets].sort((a, b) => {
-    const aData = a.data.filter((v): v is number => v !== null);
-    const bData = b.data.filter((v): v is number => v !== null);
+    const aData = a.data.map((d) => d.y).filter((v): v is number => v !== null);
+    const bData = b.data.map((d) => d.y).filter((v): v is number => v !== null);
     const aAvg =
       aData.length > 0
         ? aData.reduce((acc, val) => acc + val, 0) / aData.length
@@ -108,7 +135,6 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
   });
 
   const chartData = {
-    labels,
     datasets: sortedDatasets,
   };
 
@@ -177,8 +203,29 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
 
             let innerHtml = "<thead>";
 
-            titleLines.forEach(function (title: any) {
-              innerHtml += "<tr><th>" + title + "</th></tr>";
+            titleLines.forEach(function (index: number) {
+              const dp = tooltipModel.dataPoints[index];
+              const formattedDate = new Date(dp.parsed.x).toLocaleDateString(
+                "ru-RU",
+                {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                }
+              );
+              const formattedTime = new Date(dp.parsed.x).toLocaleTimeString(
+                "ru-RU",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }
+              );
+              innerHtml +=
+                "<tr><th>" +
+                formattedDate +
+                " в " +
+                formattedTime +
+                "</th></tr>";
             });
             innerHtml += "</thead><tbody>";
 
@@ -253,14 +300,7 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
         callbacks: {
           label: function (context: any) {
             const city = context.dataset.label;
-            const originalCity =
-              Object.keys(cityTranslations).find(
-                (key) => cityTranslations[key] === city
-              ) || city;
-            const allLogsForCity = cityLogs[originalCity] || [];
-            const log = allLogsForCity.find(
-              (l: Log) => formatTime(l.created_at, timeRange) === context.label
-            );
+            const log = context.raw;
 
             if (!log) return "";
 
@@ -318,12 +358,26 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
         },
       },
       x: {
+        type: "time" as const,
+        time: {
+          unit: "hour" as const,
+          displayFormats: {
+            hour: "HH:mm",
+          },
+          tooltipFormat: "PPP p",
+        },
+        adapters: {
+          date: {
+            locale: ru,
+          },
+        },
         grid: {
           display: false,
         },
         ticks: {
           color: "#d4d4d4",
           maxTicksLimit: getMaxTicksLimit(),
+          source: "auto" as const,
         },
       },
     },

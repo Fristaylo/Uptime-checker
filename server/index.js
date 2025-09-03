@@ -250,11 +250,16 @@ const pingAndSave = async () => {
       throw new Error(`Measurement ${id} did not complete in time.`);
     }
 
-    for (const result of resultData.results) {
-      const { probe, result: pingResult } = result;
+    const resultsByLocation = new Map(
+      resultData.results.map((r) => [`${r.probe.city}-${r.probe.country}`, r])
+    );
+
+    for (const location of locations) {
+      const result = resultsByLocation.get(`${location.city}-${location.country}`);
       let values;
 
-      if (pingResult.status === "finished" && pingResult.stats) {
+      if (result && result.result.status === "finished" && result.result.stats) {
+        const { probe, result: pingResult } = result;
         const { stats } = pingResult;
         values = [
           id,
@@ -273,10 +278,10 @@ const pingAndSave = async () => {
       } else {
         values = [
           id,
-          probe.country,
-          probe.city,
-          probe.asn,
-          probe.network,
+          location.country,
+          location.city,
+          null,
+          null,
           3,
           0,
           100,
@@ -299,6 +304,29 @@ const pingAndSave = async () => {
     console.log(`--- PING check cycle for measurement ${id} completed. ---`);
   } catch (err) {
     console.error("Failed to complete ping measurement cycle:", err.message);
+    // Insert nulls for all locations on failure
+    for (const location of locations) {
+      const query = `
+      INSERT INTO ping_logs (
+        probe_id, country, city, asn, network, packets_sent, packets_received,
+        packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `;
+      await pool.query(query, [
+        "failed",
+        location.country,
+        location.city,
+        null,
+        null,
+        3,
+        0,
+        100,
+        null,
+        null,
+        null,
+        null,
+      ]);
+    }
   }
 };
 
@@ -391,11 +419,16 @@ const httpCheckAndSave = async () => {
       throw new Error(`Measurement ${id} did not complete in time.`);
     }
 
-    for (const result of resultData.results) {
-      const { probe, result: httpResult } = result;
+    const resultsByLocation = new Map(
+      resultData.results.map((r) => [`${r.probe.city}-${r.probe.country}`, r])
+    );
+
+    for (const location of locations) {
+      const result = resultsByLocation.get(`${location.city}-${location.country}`);
       let values;
 
-      if (httpResult.status === "finished") {
+      if (result && result.result.status === "finished") {
+        const { probe, result: httpResult } = result;
         console.log(
           `[SUCCESS] HTTP check to ${probe.city}, ${probe.country}: Status ${httpResult.statusCode}`
         );
@@ -415,16 +448,21 @@ const httpCheckAndSave = async () => {
         ];
       } else {
         console.log(
-          `[FAILURE] HTTP check to ${probe.city}, ${
-            probe.country
-          }: Status ${httpResult.status.toUpperCase()}`
+          `[FAILURE] HTTP check to ${location.city}, ${
+            location.country
+          }: Status ${result ? result.result.status.toUpperCase() : "UNKNOWN"}`
         );
         values = [
           id,
-          probe.country,
-          probe.city,
-          probe.asn,
-          probe.network,
+          location.country,
+          location.city,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           null,
           null,
         ];
@@ -441,6 +479,42 @@ const httpCheckAndSave = async () => {
     console.log(`--- HTTP check cycle for measurement ${id} completed. ---`);
   } catch (err) {
     console.error("Failed to complete HTTP measurement cycle:", err.message);
+    for (const location of locations) {
+      const query = `
+      INSERT INTO http_logs (
+        probe_id, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `;
+      await pool.query(query, [
+        "failed",
+        location.country,
+        location.city,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]);
+    }
+  }
+};
+
+const cleanupOldLogs = async () => {
+  console.log(`--- Running cleanup of old logs at ${new Date().toISOString()} ---`);
+  try {
+    const pingLogsQuery = `DELETE FROM ping_logs WHERE created_at < NOW() - INTERVAL '7 days'`;
+    const httpLogsQuery = `DELETE FROM http_logs WHERE created_at < NOW() - INTERVAL '7 days'`;
+
+    const pingResult = await pool.query(pingLogsQuery);
+    const httpResult = await pool.query(httpLogsQuery);
+
+    console.log(`Cleanup successful. Removed ${pingResult.rowCount} from ping_logs and ${httpResult.rowCount} from http_logs.`);
+  } catch (err) {
+    console.error("Failed to cleanup old logs:", err.message);
   }
 };
 
@@ -448,8 +522,10 @@ app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
   createTable();
   createHttpTable();
+  cleanupOldLogs();
   // pingAndSave(); // Run once on startup
   // httpCheckAndSave(); // Run once on startup
   setInterval(pingAndSave, 120000); // Run every 2 minutes
   setInterval(httpCheckAndSave, 120000); // Run every 2 minutes
+  setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day
 });
