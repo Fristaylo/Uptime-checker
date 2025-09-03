@@ -394,8 +394,8 @@ app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
   createTable();
   createHttpTable();
-  pingAndSave(); // Run once on startup
-  httpCheckAndSave(); // Run once on startup
+  // pingAndSave(); // Run once on startup
+  // httpCheckAndSave(); // Run once on startup
   setInterval(pingAndSave, 120000); // Run every 2 minutes
   setInterval(httpCheckAndSave, 120000); // Run every 2 minutes
 });

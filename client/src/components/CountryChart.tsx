@@ -58,9 +58,10 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
   const labels = [
     ...new Set(
       allLogs.map((log: Log) =>
-        new Date(log.created_at).toLocaleTimeString([], {
+        new Date(log.created_at + "Z").toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         })
       )
     ),
@@ -72,9 +73,10 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
     const color = lineColors[index % lineColors.length];
     const dataMap = new Map(
       (logs as Log[]).slice(-limit).map((log: Log) => [
-        new Date(log.created_at).toLocaleTimeString([], {
+        new Date(log.created_at + "Z").toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
         dataType === "ping" ? log.rtt_avg : log.ttfb,
       ])
@@ -146,9 +148,10 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
             const allLogsForCity = cityLogs[originalCity] || [];
             const log = allLogsForCity.find(
               (l: Log) =>
-                new Date(l.created_at).toLocaleTimeString([], {
+                new Date(l.created_at + "Z").toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
+                  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 }) === context.label
             );
 
