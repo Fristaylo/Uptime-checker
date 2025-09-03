@@ -198,29 +198,26 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
           }
 
           if (tooltipModel.body) {
-            const titleLines = tooltipModel.title || [];
             const bodyLines = tooltipModel.body.map(getBody);
 
             let innerHtml = "<thead>";
 
-            titleLines.forEach(function (index: number) {
-              const dp = tooltipModel.dataPoints[index];
-              if (dp.parsed) {
-                const formattedDate = new Date(dp.parsed.x).toLocaleDateString(
-                  "ru-RU",
-                  {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  }
-                );
-                const formattedTime = new Date(dp.parsed.x).toLocaleTimeString(
-                  "ru-RU",
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }
-                );
+            if (tooltipModel.dataPoints.length > 0) {
+              const firstPoint = tooltipModel.dataPoints[0];
+              if (firstPoint && firstPoint.parsed) {
+                const formattedDate = new Date(
+                  firstPoint.parsed.x
+                ).toLocaleDateString("ru-RU", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                });
+                const formattedTime = new Date(
+                  firstPoint.parsed.x
+                ).toLocaleTimeString("ru-RU", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
                 innerHtml +=
                   "<tr><th>" +
                   formattedDate +
@@ -228,7 +225,7 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
                   formattedTime +
                   "</th></tr>";
               }
-            });
+            }
             innerHtml += "</thead><tbody>";
 
             bodyLines.forEach(function (body: any, i: any) {
@@ -317,7 +314,9 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
               const tooltipLines = [
                 city,
                 `Общее время: ${
-                  context.parsed.y !== null ? context.parsed.y.toFixed(0) : "N/A"
+                  context.parsed.y !== null
+                    ? context.parsed.y.toFixed(0)
+                    : "N/A"
                 }мс`,
                 `Статус: ${log.status_code}`,
                 `DNS: ${log.dns_time}мс`,
