@@ -4,8 +4,6 @@ WORKDIR /app/client
 COPY client/package.json client/package-lock.json ./
 RUN npm install
 COPY client/ ./
-ARG GLOBALPING_API_KEY
-ENV GLOBALPING_API_KEY=$GLOBALPING_API_KEY
 RUN npm run build
 
 # Stage 2: Build the server
