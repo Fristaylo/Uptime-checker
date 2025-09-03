@@ -43,7 +43,12 @@ const createHttpTable = async () => {
       asn INT,
       network VARCHAR(255),
       status_code INT,
-      ttfb FLOAT,
+      total_time FLOAT,
+      download_time FLOAT,
+      first_byte_time FLOAT,
+      dns_time FLOAT,
+      tls_time FLOAT,
+      tcp_time FLOAT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
@@ -89,7 +94,7 @@ app.get("/http-logs", async (req, res) => {
       SELECT
         country,
         city,
-        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'ttfb', ttfb) ORDER BY created_at ASC) as logs
+        json_agg(json_build_object('status_code', status_code, 'created_at', created_at, 'total_time', total_time) ORDER BY created_at ASC) as logs
       FROM
         http_logs
       WHERE
@@ -104,10 +109,6 @@ app.get("/http-logs", async (req, res) => {
       acc[row.country][row.city] = row.logs;
       return acc;
     }, {});
-    console.log(
-      "Sending data to client:",
-      JSON.stringify(logsByCountryCity, null, 2)
-    );
     res.json(logsByCountryCity);
   } catch (err) {
     console.error(err);
@@ -358,6 +359,11 @@ const httpCheckAndSave = async () => {
           probe.network,
           httpResult.statusCode,
           httpResult.timings.total || null,
+          httpResult.timings.download || null,
+          httpResult.timings.firstByte || null,
+          httpResult.timings.dns || null,
+          httpResult.timings.tls || null,
+          httpResult.timings.tcp || null,
         ];
       } else {
         console.log(
@@ -378,8 +384,8 @@ const httpCheckAndSave = async () => {
 
       const query = `
       INSERT INTO http_logs (
-        probe_id, country, city, asn, network, status_code, ttfb
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        probe_id, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     `;
 
       await pool.query(query, values);

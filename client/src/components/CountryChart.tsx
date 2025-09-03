@@ -26,7 +26,7 @@ interface Log {
   rtt_avg?: number;
   created_at: string;
   packet_loss?: number;
-  ttfb?: number;
+  total_time?: number;
   status_code?: number;
 }
 
@@ -78,7 +78,7 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
           minute: "2-digit",
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
-        dataType === "ping" ? log.rtt_avg : log.ttfb,
+        dataType === "ping" ? log.rtt_avg : log.total_time,
       ])
     );
 
@@ -166,7 +166,7 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
             } else {
               return [
                 city,
-                `TTFB: ${context.parsed.y.toFixed(0)}мс`,
+                `Total time: ${context.parsed.y.toFixed(0)}мс`,
                 `Статус: ${log.status_code}`,
               ];
             }
