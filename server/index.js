@@ -357,7 +357,7 @@ const httpCheckAndSave = async () => {
           probe.asn,
           probe.network,
           httpResult.statusCode,
-          httpResult.timings.ttfb,
+          httpResult.timings.total || null,
         ];
       } else {
         console.log(
