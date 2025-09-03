@@ -39,10 +39,11 @@ const PingDashboard = () => {
   const [view, setView] = useState("ping");
 
   const fetchLogs = async () => {
+    setLoading(true);
     try {
       const [pingResponse, httpResponse] = await Promise.all([
-        fetch("/logs"),
-        fetch("/http-logs"),
+        fetch(`/logs?limit=${limit}`),
+        fetch(`/http-logs?limit=${limit}`),
       ]);
 
       if (!pingResponse.ok) {
@@ -68,7 +69,7 @@ const PingDashboard = () => {
     fetchLogs();
     const interval = setInterval(fetchLogs, 120000);
     return () => clearInterval(interval);
-  }, []);
+  }, [limit]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;

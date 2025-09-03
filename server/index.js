@@ -62,18 +62,35 @@ const createHttpTable = async () => {
 
 app.get("/logs", async (req, res) => {
   try {
-    const { rows } = await pool.query(`
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const { rows } = await pool.query(
+      `
+      WITH ranked_logs AS (
+        SELECT
+          country,
+          city,
+          rtt_avg,
+          created_at,
+          packet_loss,
+          ROW_NUMBER() OVER(PARTITION BY country, city ORDER BY created_at DESC) as rn
+        FROM
+          ping_logs
+        WHERE
+          created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+      )
       SELECT
         country,
         city,
         json_agg(json_build_object('rtt_avg', rtt_avg, 'created_at', created_at, 'packet_loss', packet_loss) ORDER BY created_at ASC) as logs
       FROM
-        ping_logs
+        ranked_logs
       WHERE
-        created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+        rn <= $1
       GROUP BY
         country, city;
-    `);
+    `,
+      [limit]
+    );
     const logsByCountryCity = rows.reduce((acc, row) => {
       if (!acc[row.country]) {
         acc[row.country] = {};
@@ -90,14 +107,25 @@ app.get("/logs", async (req, res) => {
 
 app.get("/http-logs", async (req, res) => {
   try {
-    const { rows } = await pool.query(`
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const { rows } = await pool.query(
+      `
+      WITH ranked_logs AS (
+        SELECT
+          *,
+          ROW_NUMBER() OVER(PARTITION BY country, city ORDER BY created_at DESC) as rn
+        FROM http_logs
+        WHERE created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+      )
       SELECT
         country, city, status_code, created_at, total_time,
         download_time, first_byte_time, dns_time, tls_time, tcp_time
-      FROM http_logs
-      WHERE created_at >= NOW() - interval '1 day' AND city IS NOT NULL
+      FROM ranked_logs
+      WHERE rn <= $1
       ORDER BY created_at ASC;
-    `);
+    `,
+      [limit]
+    );
     const logsByCountryCity = {};
     for (const row of rows) {
       const { country, city, ...logData } = row;

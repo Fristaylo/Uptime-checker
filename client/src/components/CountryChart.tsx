@@ -58,27 +58,25 @@ const cityTranslations: { [key: string]: string } = {
   Tallinn: "Таллин",
 };
 
-const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
+const CountryChart = ({ cityLogs, dataType }: CountryChartProps) => {
   const allLogs = Object.values(cityLogs).flat();
   const labels = [
     ...new Set(
       allLogs.map((log: Log) =>
-        new Date(log.created_at + "Z").toLocaleTimeString([], {
+        new Date(log.created_at).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         })
       )
     ),
-  ]
-    .sort()
-    .slice(-limit);
+  ].sort();
 
   const datasets = Object.entries(cityLogs).map(([city, logs], index) => {
     const color = lineColors[index % lineColors.length];
     const dataMap = new Map(
-      (logs as Log[]).slice(-limit).map((log: Log) => [
-        new Date(log.created_at + "Z").toLocaleTimeString([], {
+      (logs as Log[]).map((log: Log) => [
+        new Date(log.created_at).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -153,7 +151,7 @@ const CountryChart = ({ cityLogs, limit, dataType }: CountryChartProps) => {
             const allLogsForCity = cityLogs[originalCity] || [];
             const log = allLogsForCity.find(
               (l: Log) =>
-                new Date(l.created_at + "Z").toLocaleTimeString([], {
+                new Date(l.created_at).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,

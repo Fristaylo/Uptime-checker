@@ -3,9 +3,14 @@ import styles from "./PingDashboard.module.scss";
 import ReactCountryFlag from "react-country-flag";
 
 interface Log {
-  ttfb?: number;
+  total_time?: number;
   created_at: string;
   status_code?: number;
+  download_time?: number;
+  first_byte_time?: number;
+  dns_time?: number;
+  tls_time?: number;
+  tcp_time?: number;
 }
 
 interface CityLogs {
