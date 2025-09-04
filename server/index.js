@@ -177,12 +177,12 @@ const pingAndSave = async () => {
   for (const target of domains) {
   const locations = [
     { country: "RU", city: "Moscow" },
-    { country: "RU", city: "Saint Petersburg" },
+    // { country: "RU", city: "Saint Petersburg" },
     { country: "UA", city: "Kyiv" },
-    { country: "UA", city: "Lviv" },
+    // { country: "UA", city: "Lviv" },
     { country: "KZ", city: "Astana" },
-    { country: "LV", city: "Riga" },
-    { country: "LT", city: "Vilnius" },
+    // { country: "LV", city: "Riga" },
+    // { country: "LT", city: "Vilnius" },
     { country: "EE", city: "Tallinn" },
   ];
   const apiKey = process.env.GLOBALPING_API_KEY;
@@ -346,12 +346,12 @@ const httpCheckAndSave = async () => {
   for (const target of domains) {
   const locations = [
     { country: "RU", city: "Moscow" },
-    { country: "RU", city: "Saint Petersburg" },
+    // { country: "RU", city: "Saint Petersburg" },
     { country: "UA", city: "Kyiv" },
-    { country: "UA", city: "Lviv" },
+    // { country: "UA", city: "Lviv" },
     { country: "KZ", city: "Astana" },
-    { country: "LV", city: "Riga" },
-    { country: "LT", city: "Vilnius" },
+    // { country: "LV", city: "Riga" },
+    // { country: "LT", city: "Vilnius" },
     { country: "EE", city: "Tallinn" },
   ];
   const apiKey = process.env.GLOBALPING_API_KEY;
