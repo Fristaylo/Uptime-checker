@@ -19,8 +19,5 @@ RUN apk add --no-cache nginx
 WORKDIR /app
 COPY --from=server-builder /app/server ./server
 COPY --from=client-builder /app/client/dist ./client/dist
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-CMD ["/start.sh"]
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+CMD sh -c "nginx -g 'daemon off;' & cd /app/server && npm start"
