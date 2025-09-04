@@ -8,10 +8,13 @@ const port = 3000;
 app.use(express.json());
 
 const createTable = async () => {
-  const query = `
-    CREATE TABLE IF NOT EXISTS ping_logs (
+  try {
+    await pool.query('DROP TABLE IF EXISTS ping_logs;');
+    const query = `
+    CREATE TABLE ping_logs (
       id SERIAL PRIMARY KEY,
       probe_id VARCHAR(255),
+      domain VARCHAR(255),
       country VARCHAR(2),
       city VARCHAR(255),
       asn INT,
@@ -26,7 +29,6 @@ const createTable = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
-  try {
     await pool.query(query);
   } catch (err) {
     console.error("Error creating table", err);
@@ -34,10 +36,13 @@ const createTable = async () => {
 };
 
 const createHttpTable = async () => {
-  const query = `
-    CREATE TABLE IF NOT EXISTS http_logs (
+  try {
+    await pool.query('DROP TABLE IF EXISTS http_logs;');
+    const query = `
+    CREATE TABLE http_logs (
       id SERIAL PRIMARY KEY,
       probe_id VARCHAR(255),
+      domain VARCHAR(255),
       country VARCHAR(2),
       city VARCHAR(255),
       asn INT,
@@ -52,7 +57,6 @@ const createHttpTable = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
-  try {
     await pool.query(query);
     console.log('Table "http_logs" created or already exists.');
   } catch (err) {
@@ -62,7 +66,7 @@ const createHttpTable = async () => {
 
 app.get("/logs", async (req, res) => {
   try {
-    const { timeRange } = req.query;
+    const { timeRange, domain } = req.query;
     let interval;
     switch (timeRange) {
       case "day":
@@ -91,10 +95,10 @@ app.get("/logs", async (req, res) => {
       FROM
         ping_logs
       WHERE
-        created_at >= NOW() - $1::interval AND city IS NOT NULL
+        created_at >= NOW() - $1::interval AND city IS NOT NULL AND domain = $2
       ORDER BY created_at ASC;
     `,
-      [interval]
+      [interval, domain]
     );
     const logsByCountryCity = {};
     for (const row of rows) {
@@ -116,7 +120,7 @@ app.get("/logs", async (req, res) => {
 
 app.get("/http-logs", async (req, res) => {
   try {
-    const { timeRange } = req.query;
+    const { timeRange, domain } = req.query;
     let interval;
     switch (timeRange) {
       case "day":
@@ -141,10 +145,10 @@ app.get("/http-logs", async (req, res) => {
         country, city, status_code, created_at, total_time,
         download_time, first_byte_time, dns_time, tls_time, tcp_time
       FROM http_logs
-      WHERE created_at >= NOW() - $1::interval AND city IS NOT NULL
+      WHERE created_at >= NOW() - $1::interval AND city IS NOT NULL AND domain = $2
       ORDER BY created_at ASC;
     `,
-      [interval]
+      [interval, domain]
     );
     const logsByCountryCity = {};
     for (const row of rows) {
@@ -164,11 +168,13 @@ app.get("/http-logs", async (req, res) => {
   }
 });
 
+const domains = ["site.yummyani.me", "ru.yummyani.me"];
+
 const pingAndSave = async () => {
   console.log(
     `--- Starting PING check cycle at ${new Date().toISOString()} ---`
   );
-  const target = "site.yummyani.me";
+  for (const target of domains) {
   const locations = [
     { country: "RU", city: "Moscow" },
     { country: "RU", city: "Saint Petersburg" },
@@ -263,6 +269,7 @@ const pingAndSave = async () => {
         const { stats } = pingResult;
         values = [
           id,
+          target,
           probe.country,
           probe.city,
           probe.asn,
@@ -278,6 +285,7 @@ const pingAndSave = async () => {
       } else {
         values = [
           id,
+          target,
           location.country,
           location.city,
           null,
@@ -294,9 +302,9 @@ const pingAndSave = async () => {
 
       const query = `
       INSERT INTO ping_logs (
-        probe_id, country, city, asn, network, packets_sent, packets_received,
+        probe_id, domain, country, city, asn, network, packets_sent, packets_received,
         packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     `;
 
       await pool.query(query, values);
@@ -308,12 +316,13 @@ const pingAndSave = async () => {
     for (const location of locations) {
       const query = `
       INSERT INTO ping_logs (
-        probe_id, country, city, asn, network, packets_sent, packets_received,
+        probe_id, domain, country, city, asn, network, packets_sent, packets_received,
         packet_loss, rtt_min, rtt_max, rtt_avg, rtt_mdev
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     `;
       await pool.query(query, [
         "failed",
+        target,
         location.country,
         location.city,
         null,
@@ -327,14 +336,14 @@ const pingAndSave = async () => {
         null,
       ]);
     }
-  }
+  }}
 };
 
 const httpCheckAndSave = async () => {
   console.log(
     `--- Starting HTTP check cycle at ${new Date().toISOString()} ---`
   );
-  const target = "site.yummyani.me";
+  for (const target of domains) {
   const locations = [
     { country: "RU", city: "Moscow" },
     { country: "RU", city: "Saint Petersburg" },
@@ -434,6 +443,7 @@ const httpCheckAndSave = async () => {
         );
         values = [
           id,
+          target,
           probe.country,
           probe.city,
           probe.asn,
@@ -454,6 +464,7 @@ const httpCheckAndSave = async () => {
         );
         values = [
           id,
+          target,
           location.country,
           location.city,
           null,
@@ -470,8 +481,8 @@ const httpCheckAndSave = async () => {
 
       const query = `
       INSERT INTO http_logs (
-        probe_id, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        probe_id, domain, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     `;
 
       await pool.query(query, values);
@@ -482,11 +493,12 @@ const httpCheckAndSave = async () => {
     for (const location of locations) {
       const query = `
       INSERT INTO http_logs (
-        probe_id, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        probe_id, domain, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
     `;
       await pool.query(query, [
         "failed",
+        target,
         location.country,
         location.city,
         null,
@@ -500,7 +512,7 @@ const httpCheckAndSave = async () => {
         null,
       ]);
     }
-  }
+  }}
 };
 
 const cleanupOldLogs = async () => {
@@ -518,13 +530,13 @@ const cleanupOldLogs = async () => {
   }
 };
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server listening at http://localhost:${port}`);
-  createTable();
-  createHttpTable();
-  cleanupOldLogs();
-  // pingAndSave(); // Run once on startup
-  // httpCheckAndSave(); // Run once on startup
+  await createTable();
+  await createHttpTable();
+  await cleanupOldLogs();
+  pingAndSave(); // Run once on startup
+  httpCheckAndSave(); // Run once on startup
   setInterval(pingAndSave, 120000); // Run every 2 minutes
   setInterval(httpCheckAndSave, 120000); // Run every 2 minutes
   setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day

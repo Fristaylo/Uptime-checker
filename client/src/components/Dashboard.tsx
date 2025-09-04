@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useParams } from "react-router-dom";
 import styles from "./Dashboard.module.scss"; // Изменено на Dashboard.module.scss
 import CountryChart from "./CountryChart";
 import ReactCountryFlag from "react-country-flag";
@@ -43,13 +43,14 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("hour");
   const location = useLocation();
+  const { domain } = useParams<{ domain: string }>();
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
       const [pingResponse, httpResponse] = await Promise.all([
-        fetch(`/logs?timeRange=${timeRange}`),
-        fetch(`/http-logs?timeRange=${timeRange}`),
+        fetch(`/logs?timeRange=${timeRange}&domain=${domain}`),
+        fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
       ]);
 
       if (!pingResponse.ok) {
@@ -75,21 +76,21 @@ const Dashboard = () => {
     fetchLogs();
     const interval = setInterval(fetchLogs, 120000);
     return () => clearInterval(interval);
-  }, [timeRange]);
+  }, [timeRange, domain]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const currentLogs = location.pathname === "/ping" ? pingLogs : httpLogs;
-  const dataType = location.pathname === "/ping" ? "ping" : "http";
+  const currentLogs = location.pathname.includes("/ping") ? pingLogs : httpLogs;
+  const dataType = location.pathname.includes("/ping") ? "ping" : "http";
 
   return (
     <div className={styles.dashboard}> {/* Изменено на styles.dashboard */}
       <div className={styles.header}>
-        <h2>Статус yummyani.me</h2>
+        <h2>Статус {domain}</h2>
         <div className={styles.controls}>
-          <NavLink to="/ping" className={({ isActive }) => isActive ? styles.active : ''}>Ping</NavLink>
-          <NavLink to="/http" className={({ isActive }) => isActive ? styles.active : ''}>HTTP</NavLink>
+          <NavLink to={`/dashboard/${domain}/ping`} className={({ isActive }) => isActive ? styles.active : ''}>Ping</NavLink>
+          <NavLink to={`/dashboard/${domain}/http`} className={({ isActive }) => isActive ? styles.active : ''}>HTTP</NavLink>
           <label htmlFor="timeRange-select">Выбор времени:</label>
           <select
             id="timeRange-select"
