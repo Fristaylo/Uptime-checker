@@ -3,6 +3,7 @@ import { NavLink, useLocation, useParams } from "react-router-dom";
 import styles from "./Dashboard.module.scss"; // Изменено на Dashboard.module.scss
 import CountryChart from "./CountryChart";
 import ReactCountryFlag from "react-country-flag";
+import { countries } from "../data/constants";
 
 interface Log {
   rtt_avg?: number;
@@ -25,16 +26,6 @@ interface CityLogs {
 interface CountryLogs {
   [country: string]: CityLogs;
 }
-
-const countryNames: Record<string, string> = {
-  RU: "Россия",
-  UA: "Украина",
-  LV: "Латвия",
-  LT: "Литва",
-  EE: "Эстония",
-  KZ: "Казахстан",
-};
-const countryOrder = ["RU", "UA", "KZ", "LV", "LT", "EE"];
 
 const Dashboard = () => {
   const [pingLogs, setPingLogs] = useState<CountryLogs>({});
@@ -74,8 +65,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchLogs();
-    const interval = setInterval(fetchLogs, 120000);
-    return () => clearInterval(interval);
+  }, [timeRange, domain]);
+
+  useEffect(() => {
+    const eventSource = new EventSource("/events");
+
+    eventSource.onerror = (err) => {
+      console.error("EventSource failed:", err);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [timeRange, domain]);
 
   if (loading) return <div>Loading...</div>;
@@ -85,12 +87,22 @@ const Dashboard = () => {
   const dataType = location.pathname.includes("/ping") ? "ping" : "http";
 
   return (
-    <div className={styles.dashboard}> {/* Изменено на styles.dashboard */}
+    <div className={styles.dashboard}>
       <div className={styles.header}>
         <h2>Статус {domain}</h2>
         <div className={styles.controls}>
-          <NavLink to={`/dashboard/${domain}/ping`} className={({ isActive }) => isActive ? styles.active : ''}>Ping</NavLink>
-          <NavLink to={`/dashboard/${domain}/http`} className={({ isActive }) => isActive ? styles.active : ''}>HTTP</NavLink>
+          <NavLink
+            to={`/dashboard/${domain}/ping`}
+            className={({ isActive }) => (isActive ? styles.active : "")}
+          >
+            Ping
+          </NavLink>
+          <NavLink
+            to={`/dashboard/${domain}/http`}
+            className={({ isActive }) => (isActive ? styles.active : "")}
+          >
+            HTTP
+          </NavLink>
           <label htmlFor="timeRange-select">Выбор времени:</label>
           <select
             id="timeRange-select"
@@ -107,10 +119,13 @@ const Dashboard = () => {
       <div className={styles.chartsGrid}>
         {Object.entries(currentLogs)
           .sort(
-            ([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b)
+            ([a], [b]) =>
+              countries.findIndex((c) => c.code === a) -
+              countries.findIndex((c) => c.code === b)
           )
           .map(([countryCode, cityLogs]) => {
-            const countryName = countryNames[countryCode] || countryCode;
+            const country = countries.find((c) => c.code === countryCode);
+            const countryName = country ? country.name : countryCode;
             return (
               <div key={countryCode} className={styles.countryChart}>
                 <div className={styles.countryHeader}>

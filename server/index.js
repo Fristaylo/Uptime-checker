@@ -64,6 +64,34 @@ const createHttpTable = async () => {
   }
 };
 
+let clients = [];
+
+app.get("/events", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  const clientId = Date.now();
+  const newClient = {
+    id: clientId,
+    res,
+  };
+  clients.push(newClient);
+  console.log(`Client ${clientId} connected`);
+
+  req.on("close", () => {
+    clients = clients.filter((client) => client.id !== clientId);
+    console.log(`Client ${clientId} disconnected`);
+  });
+});
+
+const sendToAllClients = (data) => {
+  clients.forEach((client) =>
+    client.res.write(`data: ${JSON.stringify(data)}\n\n`)
+  );
+};
+
 app.get("/logs", async (req, res) => {
   try {
     const { timeRange, domain } = req.query;
@@ -310,6 +338,7 @@ const pingAndSave = async () => {
       await pool.query(query, values);
     }
     console.log(`--- PING check cycle for measurement ${id} completed. ---`);
+    sendToAllClients({ type: "ping" });
   } catch (err) {
     console.error("Failed to complete ping measurement cycle:", err.message);
     // Insert nulls for all locations on failure
@@ -488,6 +517,7 @@ const httpCheckAndSave = async () => {
       await pool.query(query, values);
     }
     console.log(`--- HTTP check cycle for measurement ${id} completed. ---`);
+    sendToAllClients({ type: "http" });
   } catch (err) {
     console.error("Failed to complete HTTP measurement cycle:", err.message);
     for (const location of locations) {
@@ -537,7 +567,7 @@ app.listen(port, async () => {
   await cleanupOldLogs();
   pingAndSave(); // Run once on startup
   httpCheckAndSave(); // Run once on startup
-  setInterval(pingAndSave, 120000); // Run every 2 minutes
-  setInterval(httpCheckAndSave, 120000); // Run every 2 minutes
+  setInterval(pingAndSave, 1200000); // Run every 20 minutes
+  setInterval(httpCheckAndSave, 60000); // Run every 1 minute
   setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day
 });

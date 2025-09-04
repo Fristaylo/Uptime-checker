@@ -14,6 +14,7 @@ import {
 import "chartjs-adapter-date-fns";
 import { ru } from "date-fns/locale";
 import CrosshairPlugin from "chartjs-plugin-crosshair";
+import { cityTranslations } from "../data/constants";
 
 ChartJS.register(
   LinearScale,
@@ -51,17 +52,6 @@ interface CountryChartProps {
 }
 
 const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
-
-const cityTranslations: { [key: string]: string } = {
-  Moscow: "Москва",
-  "Saint Petersburg": "Санкт-Петербург",
-  Kyiv: "Киев",
-  Lviv: "Львов",
-  Almaty: "Алматы",
-  Riga: "Рига",
-  Vilnius: "Вильнюс",
-  Tallinn: "Таллин",
-};
 
 const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
   const datasets = Object.entries(cityLogs).map(([city, logs], index) => {

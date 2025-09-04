@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./DomainSelector.module.scss";
-
-const domains = ["site.yummyani.me", "ru.yummyani.me"];
+import { domains } from "../data/constants";
 
 const DomainSelector = () => {
   return (
