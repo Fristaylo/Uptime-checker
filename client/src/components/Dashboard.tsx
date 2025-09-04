@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import styles from "./PingDashboard.module.scss";
+import styles from "./Dashboard.module.scss"; // Изменено на Dashboard.module.scss
 import CountryChart from "./CountryChart";
-import HttpDashboard from "./HttpDashboard";
 import ReactCountryFlag from "react-country-flag";
 
 interface Log {
@@ -11,6 +10,12 @@ interface Log {
   packet_loss?: number;
   ttfb?: number;
   status_code?: number;
+  total_time?: number;
+  download_time?: number;
+  first_byte_time?: number;
+  dns_time?: number;
+  tls_time?: number;
+  tcp_time?: number;
 }
 
 interface CityLogs {
@@ -31,7 +36,7 @@ const countryNames: Record<string, string> = {
 };
 const countryOrder = ["RU", "UA", "KZ", "LV", "LT", "EE"];
 
-const PingDashboard = () => {
+const Dashboard = () => {
   const [pingLogs, setPingLogs] = useState<CountryLogs>({});
   const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
   const [loading, setLoading] = useState(true);
@@ -75,8 +80,11 @@ const PingDashboard = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const currentLogs = location.pathname === "/ping" ? pingLogs : httpLogs;
+  const dataType = location.pathname === "/ping" ? "ping" : "http";
+
   return (
-    <div className={styles.pingDashboard}>
+    <div className={styles.dashboard}> {/* Изменено на styles.dashboard */}
       <div className={styles.header}>
         <h2>Статус yummyani.me</h2>
         <div className={styles.controls}>
@@ -95,45 +103,41 @@ const PingDashboard = () => {
           </select>
         </div>
       </div>
-      {location.pathname === "/ping" ? (
-        <div className={styles.chartsGrid}>
-          {Object.entries(pingLogs)
-            .sort(
-              ([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b)
-            )
-            .map(([countryCode, cityLogs]) => {
-              const countryName = countryNames[countryCode] || countryCode;
-              return (
-                <div key={countryCode} className={styles.countryChart}>
-                  <div className={styles.countryHeader}>
-                    <ReactCountryFlag
-                      countryCode={countryCode}
-                      svg
-                      style={{
-                        width: "24px",
-                        height: "16px",
-                        borderRadius: "5px",
-                      }}
-                      title={countryName}
-                    />
-                    <p className={styles.countryName}>{countryName}</p>
-                  </div>
-                  <div className={styles.chartContainer}>
-                    <CountryChart
-                      cityLogs={cityLogs}
-                      timeRange={timeRange}
-                      dataType="ping"
-                    />
-                  </div>
+      <div className={styles.chartsGrid}>
+        {Object.entries(currentLogs)
+          .sort(
+            ([a], [b]) => countryOrder.indexOf(a) - countryOrder.indexOf(b)
+          )
+          .map(([countryCode, cityLogs]) => {
+            const countryName = countryNames[countryCode] || countryCode;
+            return (
+              <div key={countryCode} className={styles.countryChart}>
+                <div className={styles.countryHeader}>
+                  <ReactCountryFlag
+                    countryCode={countryCode}
+                    svg
+                    style={{
+                      width: "24px",
+                      height: "16px",
+                      borderRadius: "5px",
+                    }}
+                    title={countryName}
+                  />
+                  <p className={styles.countryName}>{countryName}</p>
                 </div>
-              );
-            })}
-        </div>
-      ) : (
-        <HttpDashboard logs={httpLogs} timeRange={timeRange} />
-      )}
+                <div className={styles.chartContainer}>
+                  <CountryChart
+                    cityLogs={cityLogs}
+                    timeRange={timeRange}
+                    dataType={dataType}
+                  />
+                </div>
+              </div>
+            );
+          })}
+      </div>
     </div>
   );
 };
 
-export default PingDashboard;
+export default Dashboard;
