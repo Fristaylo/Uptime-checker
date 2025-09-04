@@ -8,7 +8,6 @@ function App() {
       <Routes>
         <Route path="/" element={<DomainSelector />} />
         <Route path="/dashboard/:domain" element={<Navigate to="http" />} />
-        <Route path="/dashboard/:domain/ping" element={<Dashboard />} />
         <Route path="/dashboard/:domain/http" element={<Dashboard />} />
       </Routes>
     </div>

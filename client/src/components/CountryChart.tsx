@@ -79,7 +79,6 @@ const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
       const avgPacketLoss =
         group.reduce((sum, log) => sum + (log.packet_loss || 0), 0) /
         group.length;
-      // Keep other metrics from the first log in the group for tooltip info
       const representativeLog = group[0];
 
       return {
