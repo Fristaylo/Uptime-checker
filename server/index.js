@@ -320,6 +320,6 @@ app.listen(port, async () => {
   await createHttpTable();
   await cleanupOldLogs();
   httpCheckAndSave(); // Run once on startup
-  setInterval(httpCheckAndSave, 60000); // Run every 1 minute
+  setInterval(httpCheckAndSave, 120000); // Run every 1 minute
   setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day
 });
