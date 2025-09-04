@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import styles from "./PingDashboard.module.scss";
 import CountryChart from "./CountryChart";
 import HttpDashboard from "./HttpDashboard";
@@ -36,7 +37,7 @@ const PingDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("hour");
-  const [view, setView] = useState("ping");
+  const location = useLocation();
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -79,8 +80,8 @@ const PingDashboard = () => {
       <div className={styles.header}>
         <h2>Статус yummyani.me</h2>
         <div className={styles.controls}>
-          <button onClick={() => setView("ping")}>Ping</button>
-          <button onClick={() => setView("http")}>HTTP</button>
+          <NavLink to="/ping" className={({ isActive }) => isActive ? styles.active : ''}>Ping</NavLink>
+          <NavLink to="/http" className={({ isActive }) => isActive ? styles.active : ''}>HTTP</NavLink>
           <label htmlFor="timeRange-select">Выбор времени:</label>
           <select
             id="timeRange-select"
@@ -94,7 +95,7 @@ const PingDashboard = () => {
           </select>
         </div>
       </div>
-      {view === "ping" ? (
+      {location.pathname === "/ping" ? (
         <div className={styles.chartsGrid}>
           {Object.entries(pingLogs)
             .sort(
