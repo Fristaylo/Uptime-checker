@@ -10,6 +10,7 @@ services:
     environment:
       - DATABASE_URL=postgres://uptime_user:password@db:5432/uptime_checker
       - GLOBALPING_API_KEY=${GLOBALPING_API_KEY}
+      - GLOBALPING_API_KEY2=${GLOBALPING_API_KEY2}
 
   db:
     image: postgres:13

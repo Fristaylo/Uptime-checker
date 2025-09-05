@@ -172,7 +172,7 @@ const httpCheckAndSave = async (locations) => {
         console.error(
           `Failed to create measurement: ${createMeasurementResponse.status} ${createMeasurementResponse.statusText}. Body: ${errorBody}`
         );
-        return;
+        continue;
       }
 
       const { id } = await createMeasurementResponse.json();
