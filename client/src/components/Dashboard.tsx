@@ -36,6 +36,7 @@ interface LocationGroups {
 const Dashboard = () => {
   const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
   const [locationGroups, setLocationGroups] = useState<LocationGroups>({});
+  const [domainLogs, setDomainLogs] = useState<{ [domain: string]: CityLogs }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("hour");
@@ -43,38 +44,52 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [logsResponse, locationsResponse] = await Promise.all([
-        fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
-        fetch("/locations"),
-      ]);
+      if (domain) {
+        const [logsResponse, locationsResponse] = await Promise.all([
+          fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
+          fetch("/locations"),
+        ]);
 
-      if (!logsResponse.ok) {
-        throw new Error(`HTTP error! status: ${logsResponse.status}`);
-      }
-      if (!locationsResponse.ok) {
-        throw new Error(`HTTP error! status: ${locationsResponse.status}`);
-      }
-
-      const logsData: CountryLogs = await logsResponse.json();
-      const locationsData: LocationGroups = await locationsResponse.json();
-
-      setHttpLogs((prevLogs) => {
-        if (JSON.stringify(prevLogs) !== JSON.stringify(logsData)) {
-          return logsData;
+        if (!logsResponse.ok) {
+          throw new Error(`HTTP error! status: ${logsResponse.status}`);
         }
-        return prevLogs;
-      });
-
-      setLocationGroups((prevGroups) => {
-        if (JSON.stringify(prevGroups) !== JSON.stringify(locationsData)) {
-          return locationsData;
+        if (!locationsResponse.ok) {
+          throw new Error(`HTTP error! status: ${locationsResponse.status}`);
         }
-        return prevGroups;
-      });
+
+        const logsData: CountryLogs = await logsResponse.json();
+        const locationsData: LocationGroups = await locationsResponse.json();
+
+        setHttpLogs(logsData);
+        setLocationGroups(locationsData);
+      } else {
+        const response = await fetch(`/http-logs?timeRange=${timeRange}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: any[] = await response.json();
+
+        const groupedByDomain: { [domain: string]: CityLogs } = data.reduce(
+          (acc, log) => {
+            const domain = log.domain;
+            if (!acc[domain]) {
+              acc[domain] = {};
+            }
+            const city = log.city;
+            if (!acc[domain][city]) {
+              acc[domain][city] = [];
+            }
+            acc[domain][city].push(log);
+            return acc;
+          },
+          {}
+        );
+        setDomainLogs(groupedByDomain);
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
-      setLoading(false); // Устанавливаем loading в false только после первой загрузки
+      setLoading(false);
     }
   };
 
@@ -84,15 +99,53 @@ const Dashboard = () => {
 
   useEffect(() => {
     const intervalId = setInterval(fetchData, 30000);
-
     return () => clearInterval(intervalId);
   }, [domain, timeRange]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const currentLogs = httpLogs;
   const dataType = "http";
+
+  if (!domain) {
+    return (
+      <div className={styles.dashboard}>
+        <div className={styles.header}>
+          <h2>Статусы доменов</h2>
+          <div className={styles.controls}>
+            <label htmlFor="timeRange-select">Выбор времени:</label>
+            <select
+              id="timeRange-select"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <option value="day">День</option>
+              <option value="4hours">4 часа</option>
+              <option value="hour">Час</option>
+              <option value="30minutes">30 минут</option>
+            </select>
+          </div>
+        </div>
+        <div className={styles.chartsGrid}>
+          {Object.entries(domainLogs).map(([domain, cityLogs]) => (
+            <div key={domain} className={styles.countryChart}>
+              <div className={styles.countryHeader}>
+                <p className={styles.countryName}>{domain}</p>
+              </div>
+              <div className={styles.chartContainer}>
+                <CountryChart
+                  cityLogs={cityLogs}
+                  cities={Object.keys(cityLogs)}
+                  timeRange={timeRange}
+                  dataType={dataType}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.dashboard}>
@@ -140,7 +193,7 @@ const Dashboard = () => {
               .map(({ countryCode, cities }) => {
                 const country = countries.find((c) => c.code === countryCode);
                 const countryName = country ? country.name : countryCode;
-                const cityLogsForCountry = currentLogs[countryCode] || {};
+                const cityLogsForCountry = httpLogs[countryCode] || {};
 
                 return (
                   <div key={countryCode} className={styles.countryChart}>
