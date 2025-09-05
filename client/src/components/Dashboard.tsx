@@ -7,6 +7,7 @@ import { countries } from "../data/constants";
 
 interface Log {
   created_at: string;
+  domain?: string;
   status_code?: number;
   total_time?: number;
   download_time?: number;
@@ -67,23 +68,23 @@ const Dashboard = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data: any[] = await response.json();
+        const data: CityLogs = await response.json();
 
-        const groupedByDomain: { [domain: string]: CityLogs } = data.reduce(
-          (acc, log) => {
-            const domain = log.domain;
-            if (!acc[domain]) {
-              acc[domain] = {};
+        const groupedByDomain: { [domain: string]: CityLogs } = {};
+
+        for (const city in data) {
+          for (const log of data[city]) {
+            if (log.domain) {
+              if (!groupedByDomain[log.domain]) {
+                groupedByDomain[log.domain] = {};
+              }
+              if (!groupedByDomain[log.domain][city]) {
+                groupedByDomain[log.domain][city] = [];
+              }
+              groupedByDomain[log.domain][city].push(log);
             }
-            const city = log.city;
-            if (!acc[domain][city]) {
-              acc[domain][city] = [];
-            }
-            acc[domain][city].push(log);
-            return acc;
-          },
-          {}
-        );
+          }
+        }
         setDomainLogs(groupedByDomain);
       }
     } catch (e: any) {

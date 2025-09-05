@@ -57,29 +57,49 @@ app.get("/http-logs", async (req, res) => {
         interval = "1 hour";
     }
 
-    const { rows } = await pool.query(
-      `
-      SELECT
-        country, city, status_code, created_at, total_time,
-        download_time, first_byte_time, dns_time, tls_time, tcp_time
-      FROM http_logs
-      WHERE created_at >= NOW() - $1::interval AND city IS NOT NULL AND domain = $2
-      ORDER BY created_at ASC;
-    `,
-      [interval, domain]
-    );
-    const logsByCountryCity = {};
-    for (const row of rows) {
-      const { country, city, ...logData } = row;
-      if (!logsByCountryCity[country]) {
-        logsByCountryCity[country] = {};
-      }
-      if (!logsByCountryCity[country][city]) {
-        logsByCountryCity[country][city] = [];
-      }
-      logsByCountryCity[country][city].push(logData);
+    let query;
+    let params;
+
+    if (domain) {
+      query = `
+        SELECT
+          country, city, status_code, created_at, total_time,
+          download_time, first_byte_time, dns_time, tls_time, tcp_time
+        FROM http_logs
+        WHERE created_at >= NOW() - $1::interval AND city IS NOT NULL AND domain = $2
+        ORDER BY created_at ASC;
+      `;
+      params = [interval, domain];
+    } else {
+      query = `
+        SELECT
+          domain, country, city, status_code, created_at, total_time,
+          download_time, first_byte_time, dns_time, tls_time, tcp_time
+        FROM http_logs
+        WHERE created_at >= NOW() - $1::interval AND city IS NOT NULL
+        ORDER BY created_at ASC;
+      `;
+      params = [interval];
     }
-    res.json(logsByCountryCity);
+
+    const { rows } = await pool.query(query, params);
+
+    if (domain) {
+      const logsByCountryCity = {};
+      for (const row of rows) {
+        const { country, city, ...logData } = row;
+        if (!logsByCountryCity[country]) {
+          logsByCountryCity[country] = {};
+        }
+        if (!logsByCountryCity[country][city]) {
+          logsByCountryCity[country][city] = [];
+        }
+        logsByCountryCity[country][city].push(logData);
+      }
+      res.json(logsByCountryCity);
+    } else {
+      res.json(rows);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
