@@ -9,9 +9,8 @@ app.use(express.json());
 
 const createHttpTable = async () => {
   try {
-    await pool.query("DROP TABLE IF EXISTS http_logs;");
     const query = `
-    CREATE TABLE http_logs (
+    CREATE TABLE IF NOT EXISTS http_logs (
       id SERIAL PRIMARY KEY,
       probe_id VARCHAR(255),
       domain VARCHAR(255),
@@ -333,6 +332,9 @@ app.listen(port, async () => {
       console.error("Check cycle failed:", err)
     );
   };
+
+  // Initial run
+  runChecks(locationGroups["2min"]);
 
   // Scheduled runs
   setInterval(() => runChecks(locationGroups["2min"]), 3 * 60 * 1000);
