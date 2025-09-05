@@ -362,12 +362,9 @@ app.listen(port, async () => {
     );
   };
 
-  // Initial run for all locations
-  runChecks(Object.values(locationGroups).flat());
-
   // Scheduled runs
-  setInterval(() => runChecks(locationGroups["2min"]), 2 * 60 * 1000);
-  setInterval(() => runChecks(locationGroups["5min"]), 5 * 60 * 1000);
-  setInterval(() => runChecks(locationGroups["6min"]), 6 * 60 * 1000);
+  setInterval(() => runChecks(locationGroups["2min"]), 3 * 60 * 1000);
+  setInterval(() => runChecks(locationGroups["5min"]), 6 * 60 * 1000);
+  setInterval(() => runChecks(locationGroups["6min"]), 7 * 60 * 1000);
   setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day
 });
