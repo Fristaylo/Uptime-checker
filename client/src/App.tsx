@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Dashboard from "./components/Dashboard";
 
 function App() {
@@ -6,8 +6,7 @@ function App() {
     <div>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard/:domain" element={<Navigate to="http" />} />
-        <Route path="/dashboard/:domain/http" element={<Dashboard />} />
+        <Route path="/:domain" element={<Dashboard />} />
       </Routes>
     </div>
   );
