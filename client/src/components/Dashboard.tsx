@@ -42,7 +42,6 @@ const Dashboard = () => {
   const { domain } = useParams<{ domain: string }>();
 
   const fetchData = async () => {
-    setLoading(true);
     try {
       const [logsResponse, locationsResponse] = await Promise.all([
         fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
@@ -59,33 +58,35 @@ const Dashboard = () => {
       const logsData: CountryLogs = await logsResponse.json();
       const locationsData: LocationGroups = await locationsResponse.json();
 
-      setHttpLogs(logsData);
-      setLocationGroups(locationsData);
+      setHttpLogs((prevLogs) => {
+        if (JSON.stringify(prevLogs) !== JSON.stringify(logsData)) {
+          return logsData;
+        }
+        return prevLogs;
+      });
+
+      setLocationGroups((prevGroups) => {
+        if (JSON.stringify(prevGroups) !== JSON.stringify(locationsData)) {
+          return locationsData;
+        }
+        return prevGroups;
+      });
     } catch (e: any) {
       setError(e.message);
     } finally {
-      setLoading(false);
+      setLoading(false); // Устанавливаем loading в false только после первой загрузки
     }
   };
 
   useEffect(() => {
-    const eventSource = new EventSource("/events");
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "http") {
-        fetchData();
-      }
-    };
-
-    eventSource.onerror = (err) => {
-      console.error("EventSource failed:", err);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
+    fetchData();
   }, [timeRange, domain]);
+
+  useEffect(() => {
+    const intervalId = setInterval(fetchData, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [domain, timeRange]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;

@@ -36,33 +36,6 @@ const createHttpTable = async () => {
   }
 };
 
-let clients = [];
-
-app.get("/events", (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders();
-
-  const clientId = Date.now();
-  const newClient = {
-    id: clientId,
-    res,
-  };
-  clients.push(newClient);
-  console.log(`Client ${clientId} connected`);
-
-  req.on("close", () => {
-    clients = clients.filter((client) => client.id !== clientId);
-    console.log(`Client ${clientId} disconnected`);
-  });
-});
-
-const sendToAllClients = (data) => {
-  clients.forEach((client) =>
-    client.res.write(`data: ${JSON.stringify(data)}\n\n`)
-  );
-};
 
 app.get("/http-logs", async (req, res) => {
   try {
@@ -301,7 +274,6 @@ const httpCheckAndSave = async (locations) => {
         await pool.query(query, values);
       }
       console.log(`--- HTTP check cycle for measurement ${id} completed. ---`);
-      sendToAllClients({ type: "http" });
     } catch (err) {
       console.error("Failed to complete HTTP measurement cycle:", err.message);
       for (const location of locations) {
