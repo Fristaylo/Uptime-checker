@@ -47,14 +47,21 @@ interface CityLogs {
 
 interface CountryChartProps {
   cityLogs: CityLogs;
+  cities: string[];
   timeRange: string;
   dataType: "ping" | "http";
 }
 
 const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
 
-const CountryChart = ({ cityLogs, timeRange, dataType }: CountryChartProps) => {
-  const datasets = Object.entries(cityLogs).map(([city, logs], index) => {
+const CountryChart = ({
+  cityLogs,
+  cities,
+  timeRange,
+  dataType,
+}: CountryChartProps) => {
+  const datasets = cities.map((city, index) => {
+    const logs = cityLogs[city] || [];
     const color = lineColors[index % lineColors.length];
     const groupedLogs = logs.reduce((acc, log) => {
       const date = new Date(log.created_at);

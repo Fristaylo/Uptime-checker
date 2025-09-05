@@ -114,32 +114,64 @@ app.get("/http-logs", async (req, res) => {
   }
 });
 
-const domains = ["site.yummyani.me", "ru.yummyani.me"];
+const domains = [
+  { name: "site.yummyani.me", apiKeyEnv: "GLOBALPING_API_KEY" },
+  { name: "ru.yummyani.me", apiKeyEnv: "GLOBALPING_API_KEY2" },
+];
 
-const httpCheckAndSave = async () => {
+const locationGroups = {
+  "2min": [
+    { country: "RU", city: "Moscow" },
+    { country: "RU", city: "Saint Petersburg" },
+    { country: "UA", city: "Kyiv" },
+    { country: "UA", city: "Lviv" },
+    { country: "KZ", city: "Almaty" },
+    { country: "KZ", city: "Astana" },
+    { country: "BY", city: "Minsk" },
+  ],
+  "5min": [
+    { country: "DE", city: "Berlin" },
+    { country: "DE", city: "Dusseldorf" },
+    { country: "KG", city: "Bishkek" },
+    { country: "PL", city: "Warsaw" },
+    { country: "PL", city: "Krakow" },
+  ],
+  "6min": [
+    { country: "LV", city: "Riga" },
+    { country: "LT", city: "Vilnius" },
+    { country: "LT", city: "Siauliai" },
+    { country: "EE", city: "Tallinn" },
+    { country: "US", city: "New York" },
+    { country: "US", city: "Los Angeles" },
+    { country: "NL", city: "Amsterdam" },
+    { country: "NL", city: "Utrecht" },
+    { country: "GB", city: "London" },
+    { country: "GB", city: "Woking" },
+    { country: "MD", city: "Chisinau" },
+    { country: "CZ", city: "Prague" },
+    { country: "CZ", city: "Brno" },
+    { country: "GE", city: "Tbilisi" },
+    { country: "AM", city: "Yerevan" },
+  ],
+};
+
+const httpCheckAndSave = async (locations) => {
   console.log(
-    `--- Starting HTTP check cycle at ${new Date().toISOString()} ---`
+    `--- Starting HTTP check cycle at ${new Date().toISOString()} for ${
+      locations.length
+    } locations ---`
   );
-  for (const target of domains) {
-    const locations = [
-      { country: "RU", city: "Moscow" },
-      { country: "RU", city: "Saint Petersburg" },
-      { country: "UA", city: "Kyiv" },
-      { country: "UA", city: "Lviv" },
-      { country: "KZ", city: "Astana" },
-      { country: "LV", city: "Riga" },
-      { country: "LT", city: "Vilnius" },
-      { country: "EE", city: "Tallinn" },
-    ];
-    const apiKey = process.env.GLOBALPING_API_KEY;
+  for (const domain of domains) {
+    const target = domain.name;
+    const apiKey = process.env[domain.apiKeyEnv];
     if (!apiKey) {
-      console.error("GLOBALPING_API_KEY is not set.");
-      return;
+      console.error(`${domain.apiKeyEnv} is not set.`);
+      continue;
     }
 
     if (!target) {
       console.error("Target is not defined");
-      return;
+      continue;
     }
     try {
       // Step 1: Create the measurement
@@ -315,11 +347,27 @@ const cleanupOldLogs = async () => {
   }
 };
 
+app.get("/locations", (req, res) => {
+  res.json(locationGroups);
+});
+
 app.listen(port, async () => {
   console.log(`Server listening at http://localhost:${port}`);
   await createHttpTable();
   await cleanupOldLogs();
-  httpCheckAndSave(); // Run once on startup
-  setInterval(httpCheckAndSave, 120000); // Run every 1 minute
+
+  const runChecks = (locations) => {
+    httpCheckAndSave(locations).catch((err) =>
+      console.error("Check cycle failed:", err)
+    );
+  };
+
+  // Initial run for all locations
+  runChecks(Object.values(locationGroups).flat());
+
+  // Scheduled runs
+  setInterval(() => runChecks(locationGroups["2min"]), 2 * 60 * 1000);
+  setInterval(() => runChecks(locationGroups["5min"]), 5 * 60 * 1000);
+  setInterval(() => runChecks(locationGroups["6min"]), 6 * 60 * 1000);
   setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day
 });

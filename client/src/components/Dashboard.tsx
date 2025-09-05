@@ -24,25 +24,43 @@ interface CountryLogs {
   [country: string]: CityLogs;
 }
 
+interface Location {
+  country: string;
+  city: string;
+}
+
+interface LocationGroups {
+  [interval: string]: Location[];
+}
+
 const Dashboard = () => {
   const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
+  const [locationGroups, setLocationGroups] = useState<LocationGroups>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("hour");
   const { domain } = useParams<{ domain: string }>();
 
-  const fetchLogs = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const [httpResponse] = await Promise.all([
+      const [logsResponse, locationsResponse] = await Promise.all([
         fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
+        fetch("/locations"),
       ]);
-      if (!httpResponse.ok) {
-        throw new Error(`HTTP error! status: ${httpResponse.status}`);
+
+      if (!logsResponse.ok) {
+        throw new Error(`HTTP error! status: ${logsResponse.status}`);
+      }
+      if (!locationsResponse.ok) {
+        throw new Error(`HTTP error! status: ${locationsResponse.status}`);
       }
 
-      const httpData: CountryLogs = await httpResponse.json();
-      setHttpLogs(httpData);
+      const logsData: CountryLogs = await logsResponse.json();
+      const locationsData: LocationGroups = await locationsResponse.json();
+
+      setHttpLogs(logsData);
+      setLocationGroups(locationsData);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -51,11 +69,13 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, [timeRange, domain]);
-
-  useEffect(() => {
     const eventSource = new EventSource("/events");
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "http") {
+        fetchData();
+      }
+    };
 
     eventSource.onerror = (err) => {
       console.error("EventSource failed:", err);
@@ -97,42 +117,59 @@ const Dashboard = () => {
           </select>
         </div>
       </div>
-      <div className={styles.chartsGrid}>
-        {Object.entries(currentLogs)
-          .sort(
-            ([a], [b]) =>
-              countries.findIndex((c) => c.code === a) -
-              countries.findIndex((c) => c.code === b)
-          )
-          .map(([countryCode, cityLogs]) => {
-            const country = countries.find((c) => c.code === countryCode);
-            const countryName = country ? country.name : countryCode;
-            return (
-              <div key={countryCode} className={styles.countryChart}>
-                <div className={styles.countryHeader}>
-                  <ReactCountryFlag
-                    countryCode={countryCode}
-                    svg
-                    style={{
-                      width: "24px",
-                      height: "16px",
-                      borderRadius: "5px",
-                    }}
-                    title={countryName}
-                  />
-                  <p className={styles.countryName}>{countryName}</p>
-                </div>
-                <div className={styles.chartContainer}>
-                  <CountryChart
-                    cityLogs={cityLogs}
-                    timeRange={timeRange}
-                    dataType={dataType}
-                  />
-                </div>
-              </div>
-            );
-          })}
-      </div>
+      {Object.entries(locationGroups).map(([interval, locations]) => (
+        <div key={interval}>
+          <h3>{interval.replace("min", " min")} locations</h3>
+          <div className={styles.chartsGrid}>
+            {locations
+              .reduce((acc, { country, city }) => {
+                let countryGroup = acc.find((g) => g.countryCode === country);
+                if (!countryGroup) {
+                  countryGroup = { countryCode: country, cities: [] };
+                  acc.push(countryGroup);
+                }
+                countryGroup.cities.push(city);
+                return acc;
+              }, [] as { countryCode: string; cities: string[] }[])
+              .sort(
+                (a, b) =>
+                  countries.findIndex((c) => c.code === a.countryCode) -
+                  countries.findIndex((c) => c.code === b.countryCode)
+              )
+              .map(({ countryCode, cities }) => {
+                const country = countries.find((c) => c.code === countryCode);
+                const countryName = country ? country.name : countryCode;
+                const cityLogsForCountry = currentLogs[countryCode] || {};
+
+                return (
+                  <div key={countryCode} className={styles.countryChart}>
+                    <div className={styles.countryHeader}>
+                      <ReactCountryFlag
+                        countryCode={countryCode}
+                        svg
+                        style={{
+                          width: "24px",
+                          height: "16px",
+                          borderRadius: "5px",
+                        }}
+                        title={countryName}
+                      />
+                      <p className={styles.countryName}>{countryName}</p>
+                    </div>
+                    <div className={styles.chartContainer}>
+                      <CountryChart
+                        cityLogs={cityLogsForCountry}
+                        cities={cities}
+                        timeRange={timeRange}
+                        dataType={dataType}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
