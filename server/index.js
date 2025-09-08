@@ -41,6 +41,9 @@ app.get("/http-logs", async (req, res) => {
     const { timeRange, domain } = req.query;
     let interval;
     switch (timeRange) {
+      case "week":
+        interval = "7 day";
+        break;
       case "day":
         interval = "1 day";
         break;

@@ -97,3 +97,13 @@
   border-bottom: 2px solid #007bff;
   color: #007bff;
 }
+.countryChartLink {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: scale(1.01);
+    transition: transform 0.3s ease-in-out;
+  }
+}

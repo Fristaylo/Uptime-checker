@@ -50,6 +50,7 @@ interface CountryChartProps {
   cities: string[];
   timeRange: string;
   dataType: "ping" | "http";
+  aggregationType: string;
 }
 
 const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
@@ -59,33 +60,46 @@ const CountryChart = ({
   cities,
   timeRange,
   dataType,
+  aggregationType,
 }: CountryChartProps) => {
   const datasets = cities.map((city, index) => {
     const logs = cityLogs[city] || [];
     const color = lineColors[index % lineColors.length];
-    const groupedLogs = logs.reduce((acc, log) => {
-      const date = new Date(log.created_at);
-      date.setSeconds(0, 0);
-      const minuteKey = date.getTime();
+    const groupedLogs = logs.reduce(
+      (acc: { [key: number]: Log[] }, log: Log) => {
+        const date = new Date(log.created_at);
+        let key;
 
-      if (!acc[minuteKey]) {
-        acc[minuteKey] = [];
-      }
-      acc[minuteKey].push(log);
-      return acc;
-    }, {} as { [key: number]: Log[] });
+        if (aggregationType === "hour") {
+          date.setMinutes(0, 0, 0);
+          key = date.getTime();
+        } else {
+          date.setSeconds(0, 0);
+          key = date.getTime();
+        }
+
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(log);
+        return acc;
+      },
+      {} as { [key: number]: Log[] }
+    );
 
     const data = Object.entries(groupedLogs).map(([key, group]) => {
       const avgValue =
         group.reduce(
-          (sum, log) =>
+          (sum: number, log: Log) =>
             sum +
             (dataType === "ping" ? log.rtt_avg || 0 : log.total_time || 0),
           0
         ) / group.length;
       const avgPacketLoss =
-        group.reduce((sum, log) => sum + (log.packet_loss || 0), 0) /
-        group.length;
+        group.reduce(
+          (sum: number, log: Log) => sum + (log.packet_loss || 0),
+          0
+        ) / group.length;
       const representativeLog = group[0];
 
       return {
@@ -115,7 +129,6 @@ const CountryChart = ({
       spanGaps: false,
     };
   });
-
   const sortedDatasets = [...datasets].sort((a, b) => {
     const aData = a.data.map((d) => d.y).filter((v): v is number => v !== null);
     const bData = b.data.map((d) => d.y).filter((v): v is number => v !== null);
@@ -199,7 +212,7 @@ const CountryChart = ({
             let innerHtml = "<thead>";
 
             if (tooltipModel.dataPoints.length > 0) {
-              const firstPoint = tooltipModel.dataPoints[0];
+              const firstPoint = tooltipModel.dataPoints;
               if (firstPoint && firstPoint.parsed) {
                 const formattedDate = new Date(
                   firstPoint.parsed.x
@@ -267,15 +280,12 @@ const CountryChart = ({
           let left = position.left + window.pageXOffset + tooltipModel.caretX;
           let top = position.top + window.pageYOffset - 70; // Fixed top position
 
-          // Center the tooltip horizontally
           left -= tooltipEl.offsetWidth / 2;
 
-          // Prevent the tooltip from going off the left side of the chart
           if (left < position.left + window.pageXOffset) {
             left = position.left + window.pageXOffset;
           }
 
-          // Prevent the tooltip from going off the right side of the chart
           if (
             left + tooltipEl.offsetWidth >
             position.right + window.pageXOffset

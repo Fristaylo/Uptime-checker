@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useParams } from "react-router-dom";
-import styles from "./Dashboard.module.scss"; // Изменено на Dashboard.module.scss
+import styles from "./Dashboard.module.scss";
 import CountryChart from "./CountryChart";
 import ReactCountryFlag from "react-country-flag";
 import { countries } from "../data/constants";
@@ -39,10 +39,13 @@ interface LocationGroups {
 const Dashboard = () => {
   const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
   const [locationGroups, setLocationGroups] = useState<LocationGroups>({});
-  const [domainLogs, setDomainLogs] = useState<{ [domain: string]: CityLogs }>({});
+  const [domainLogs, setDomainLogs] = useState<{ [domain: string]: CityLogs }>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("hour");
+  const [aggregationType, setAggregationType] = useState("standard");
   const { domain } = useParams<{ domain: string }>();
 
   const fetchData = async () => {
@@ -121,28 +124,45 @@ const Dashboard = () => {
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
             >
+              <option value="week">7 дней</option>
               <option value="day">День</option>
               <option value="4hours">4 часа</option>
               <option value="hour">Час</option>
               <option value="30minutes">30 минут</option>
             </select>
+            <label htmlFor="aggregation-select">Группировка:</label>
+            <select
+              id="aggregation-select"
+              value={aggregationType}
+              onChange={(e) => setAggregationType(e.target.value)}
+            >
+              <option value="standard">Стандарт</option>
+              <option value="hour">Час</option>
+            </select>
           </div>
         </div>
         <div className={styles.chartsGrid}>
           {Object.entries(domainLogs).map(([domain, cityLogs]) => (
-            <div key={domain} className={styles.countryChart}>
-              <div className={styles.countryHeader}>
-                <p className={styles.countryName}>{domain}</p>
+            <NavLink
+              to={`/dashboard/${domain}`}
+              key={domain}
+              className={styles.countryChartLink}
+            >
+              <div className={styles.countryChart}>
+                <div className={styles.countryHeader}>
+                  <p className={styles.countryName}>{domain}</p>
+                </div>
+                <div className={styles.chartContainer}>
+                  <CountryChart
+                    cityLogs={cityLogs}
+                    cities={Object.keys(cityLogs)}
+                    timeRange={timeRange}
+                    dataType={dataType}
+                    aggregationType={aggregationType}
+                  />
+                </div>
               </div>
-              <div className={styles.chartContainer}>
-                <CountryChart
-                  cityLogs={cityLogs}
-                  cities={Object.keys(cityLogs)}
-                  timeRange={timeRange}
-                  dataType={dataType}
-                />
-              </div>
-            </div>
+            </NavLink>
           ))}
         </div>
       </div>
@@ -166,10 +186,20 @@ const Dashboard = () => {
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
           >
+            <option value="week">7 дней</option>
             <option value="day">День</option>
             <option value="4hours">4 часа</option>
             <option value="hour">Час</option>
             <option value="30minutes">30 минут</option>
+          </select>
+          <label htmlFor="aggregation-select">Группировка:</label>
+          <select
+            id="aggregation-select"
+            value={aggregationType}
+            onChange={(e) => setAggregationType(e.target.value)}
+          >
+            <option value="standard">Стандарт</option>
+            <option value="hour">Час</option>
           </select>
         </div>
       </div>
@@ -218,6 +248,7 @@ const Dashboard = () => {
                         cities={cities}
                         timeRange={timeRange}
                         dataType={dataType}
+                        aggregationType={aggregationType}
                       />
                     </div>
                   </div>
