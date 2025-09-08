@@ -144,7 +144,7 @@ const Dashboard = () => {
         <div className={styles.chartsGrid}>
           {Object.entries(domainLogs).map(([domain, cityLogs]) => (
             <NavLink
-              to={`/dashboard/${domain}`}
+              to={`${domain}`}
               key={domain}
               className={styles.countryChartLink}
             >
