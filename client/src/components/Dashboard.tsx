@@ -107,6 +107,12 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [domain, timeRange]);
 
+  useEffect(() => {
+    if (timeRange === "week") {
+      setAggregationType("hour");
+    }
+  }, [timeRange]);
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
