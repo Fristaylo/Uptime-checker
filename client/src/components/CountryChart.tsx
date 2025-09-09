@@ -51,7 +51,6 @@ interface CountryChartProps {
   cityLogs: CityLogs;
   cities: string[];
   timeRange: string;
-  dataType: "ping" | "http";
   aggregationType: string;
   isChartLoading: boolean;
 }
@@ -62,7 +61,6 @@ const CountryChart = ({
   cityLogs,
   cities,
   timeRange,
-  dataType,
   aggregationType,
   isChartLoading,
 }: CountryChartProps) => {
@@ -119,9 +117,7 @@ const CountryChart = ({
     const data = Object.entries(groupedLogs).map(([key, group]) => {
       const avgValue =
         group.reduce(
-          (sum: number, log: Log) =>
-            sum +
-            (dataType === "ping" ? log.rtt_avg || 0 : log.total_time || 0),
+          (sum: number, log: Log) => sum + (log.total_time || 0),
           0
         ) / group.length;
       const avgPacketLoss =
@@ -338,14 +334,6 @@ const CountryChart = ({
 
             if (!log) return "";
 
-            if (dataType === "ping") {
-              if (context.parsed.y === null) {
-                return `${city} | Нет данных`;
-              }
-              return `${city} | Пинг: ${context.parsed.y.toFixed(
-                0
-              )}мс | Потеря пакетов: ${log.packet_loss}%`;
-            } else {
               const tooltipLines = [
                 city,
                 `Общее время: ${
@@ -361,7 +349,6 @@ const CountryChart = ({
                 `Загрузка: ${log.download_time}мс`,
               ];
               return tooltipLines.join(" | ");
-            }
           },
         },
       },

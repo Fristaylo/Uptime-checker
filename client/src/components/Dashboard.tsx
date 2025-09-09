@@ -116,8 +116,6 @@ const Dashboard = () => {
 
   if (error) return <div>Error: {error}</div>;
 
-  const dataType = "http";
-
   if (!domain) {
     return (
       <div className={styles.dashboard}>
@@ -175,7 +173,6 @@ const Dashboard = () => {
                         cityLogs={cityLogs}
                         cities={Object.keys(cityLogs)}
                         timeRange={timeRange}
-                        dataType={dataType}
                         aggregationType={aggregationType}
                         isChartLoading={isChartLoading}
                       />
@@ -193,12 +190,6 @@ const Dashboard = () => {
       <div className={styles.header}>
         <h2>Статус {domain}</h2>
         <div className={styles.controls}>
-          <NavLink
-            to={`/dashboard/${domain}/http`}
-            className={({ isActive }) => (isActive ? styles.active : "")}
-          >
-            HTTP
-          </NavLink>
           <label htmlFor="timeRange-select">Выбор времени:</label>
           <select
             id="timeRange-select"
@@ -280,7 +271,6 @@ const Dashboard = () => {
                             cityLogs={cityLogsForCountry}
                             cities={cities}
                             timeRange={timeRange}
-                            dataType={dataType}
                             aggregationType={aggregationType}
                             isChartLoading={isChartLoading}
                           />
