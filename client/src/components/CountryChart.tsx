@@ -1,4 +1,6 @@
 import { Line } from "react-chartjs-2";
+import { useRef, useEffect } from "react";
+import styles from "./CountryChart.module.scss";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -51,6 +53,7 @@ interface CountryChartProps {
   timeRange: string;
   dataType: "ping" | "http";
   aggregationType: string;
+  isChartLoading: boolean;
 }
 
 const lineColors = ["#ff6384", "#ffcd56", "#ff9f40", "#4bc0c0", "#9966ff"];
@@ -61,7 +64,33 @@ const CountryChart = ({
   timeRange,
   dataType,
   aggregationType,
+  isChartLoading,
 }: CountryChartProps) => {
+  type ChartData = {
+    x: number;
+    y: number | null;
+    packet_loss: number;
+    status_code: number | undefined;
+    dns_time: number | undefined;
+    tcp_time: number | undefined;
+    tls_time: number | undefined;
+    first_byte_time: number | undefined;
+    download_time: number | undefined;
+  };
+
+  const chartRef = useRef<ChartJS<"line", ChartData[]>>(null);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (chart) {
+      if (isChartLoading) {
+        chart.canvas.classList.add(styles.chartLoading);
+      } else {
+        chart.canvas.classList.remove(styles.chartLoading);
+      }
+    }
+  }, [isChartLoading]);
+
   const datasets = cities.map((city, index) => {
     const logs = cityLogs[city] || [];
     const color = lineColors[index % lineColors.length];
@@ -147,7 +176,7 @@ const CountryChart = ({
     datasets: sortedDatasets,
   };
 
-  const getMaxTicksLimit = () => {
+  const getMaxTicksLimit = (timeRange: string) => {
     switch (timeRange) {
       case "day":
         return 6;
@@ -162,7 +191,7 @@ const CountryChart = ({
     }
   };
 
-  const options = {
+  const getOptions = (timeRange: string) => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -388,14 +417,14 @@ const CountryChart = ({
         },
         ticks: {
           color: "#d4d4d4",
-          maxTicksLimit: getMaxTicksLimit(),
+          maxTicksLimit: getMaxTicksLimit(timeRange),
           source: "auto" as const,
         },
       },
     },
-  };
+  });
 
-  return <Line options={options} data={chartData} />;
+  return <Line ref={chartRef} options={getOptions(timeRange)} data={chartData} />;
 };
 
 export default CountryChart;

@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import styles from "./Dashboard.module.scss";
 import CountryChart from "./CountryChart";
+import CountryChartPlug from "./CountryChartPlug";
 import ReactCountryFlag from "react-country-flag";
-import { countries } from "../data/constants";
+import { countries, domains } from "../data/constants";
 
 interface Log {
   created_at: string;
@@ -43,6 +44,7 @@ const Dashboard = () => {
     {}
   );
   const [loading, setLoading] = useState(true);
+  const [isChartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("hour");
   const [aggregationType, setAggregationType] = useState("standard");
@@ -97,23 +99,21 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    setLoading(true);
+    fetchData();
+  }, [domain]);
 
   useEffect(() => {
-    fetchData();
-  }, [timeRange, domain]);
+    setChartLoading(true);
+    fetchData().finally(() => setChartLoading(false));
+  }, [timeRange]);
 
   useEffect(() => {
     const intervalId = setInterval(fetchData, 30000);
     return () => clearInterval(intervalId);
   }, [domain, timeRange]);
 
-  useEffect(() => {
-    if (timeRange === "week") {
-      setAggregationType("hour");
-    }
-  }, [timeRange]);
-
-  if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   const dataType = "http";
@@ -128,7 +128,15 @@ const Dashboard = () => {
             <select
               id="timeRange-select"
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={(e) => {
+                const newTimeRange = e.target.value;
+                if (newTimeRange === "week" || newTimeRange === "day") {
+                  setAggregationType("hour");
+                } else {
+                  setAggregationType("standard");
+                }
+                setTimeRange(newTimeRange);
+              }}
             >
               <option value="week">7 дней</option>
               <option value="day">День</option>
@@ -148,28 +156,33 @@ const Dashboard = () => {
           </div>
         </div>
         <div className={styles.chartsGrid}>
-          {Object.entries(domainLogs).map(([domain, cityLogs]) => (
-            <NavLink
-              to={`${domain}`}
-              key={domain}
-              className={styles.countryChartLink}
-            >
-              <div className={styles.countryChart}>
-                <div className={styles.countryHeader}>
-                  <p className={styles.countryName}>{domain}</p>
-                </div>
-                <div className={styles.chartContainer}>
-                  <CountryChart
-                    cityLogs={cityLogs}
-                    cities={Object.keys(cityLogs)}
-                    timeRange={timeRange}
-                    dataType={dataType}
-                    aggregationType={aggregationType}
-                  />
-                </div>
-              </div>
-            </NavLink>
-          ))}
+          {loading
+            ? Array.from({ length: domains.length }).map((_, index) => (
+                <CountryChartPlug key={index} />
+              ))
+            : Object.entries(domainLogs).map(([domain, cityLogs]) => (
+                <NavLink
+                  to={`${domain}`}
+                  key={domain}
+                  className={styles.countryChartLink}
+                >
+                  <div className={styles.countryChart}>
+                    <div className={styles.countryHeader}>
+                      <p className={styles.countryName}>{domain}</p>
+                    </div>
+                    <div className={styles.chartContainer}>
+                      <CountryChart
+                        cityLogs={cityLogs}
+                        cities={Object.keys(cityLogs)}
+                        timeRange={timeRange}
+                        dataType={dataType}
+                        aggregationType={aggregationType}
+                        isChartLoading={isChartLoading}
+                      />
+                    </div>
+                  </div>
+                </NavLink>
+              ))}
         </div>
       </div>
     );
@@ -190,7 +203,15 @@ const Dashboard = () => {
           <select
             id="timeRange-select"
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
+            onChange={(e) => {
+              const newTimeRange = e.target.value;
+              if (newTimeRange === "week" || newTimeRange === "day") {
+                setAggregationType("hour");
+              } else {
+                setAggregationType("standard");
+              }
+              setTimeRange(newTimeRange);
+            }}
           >
             <option value="week">7 дней</option>
             <option value="day">День</option>
@@ -213,53 +234,60 @@ const Dashboard = () => {
         <div key={interval}>
           <h3>{interval.replace("min", " min")} locations</h3>
           <div className={styles.chartsGrid}>
-            {locations
-              .reduce((acc, { country, city }) => {
-                let countryGroup = acc.find((g) => g.countryCode === country);
-                if (!countryGroup) {
-                  countryGroup = { countryCode: country, cities: [] };
-                  acc.push(countryGroup);
-                }
-                countryGroup.cities.push(city);
-                return acc;
-              }, [] as { countryCode: string; cities: string[] }[])
-              .sort(
-                (a, b) =>
-                  countries.findIndex((c) => c.code === a.countryCode) -
-                  countries.findIndex((c) => c.code === b.countryCode)
-              )
-              .map(({ countryCode, cities }) => {
-                const country = countries.find((c) => c.code === countryCode);
-                const countryName = country ? country.name : countryCode;
-                const cityLogsForCountry = httpLogs[countryCode] || {};
+            {loading
+              ? countries.map((_, index) => <CountryChartPlug key={index} />)
+              : locations
+                  .reduce((acc, { country, city }) => {
+                    let countryGroup = acc.find(
+                      (g) => g.countryCode === country
+                    );
+                    if (!countryGroup) {
+                      countryGroup = { countryCode: country, cities: [] };
+                      acc.push(countryGroup);
+                    }
+                    countryGroup.cities.push(city);
+                    return acc;
+                  }, [] as { countryCode: string; cities: string[] }[])
+                  .sort(
+                    (a, b) =>
+                      countries.findIndex((c) => c.code === a.countryCode) -
+                      countries.findIndex((c) => c.code === b.countryCode)
+                  )
+                  .map(({ countryCode, cities }) => {
+                    const country = countries.find(
+                      (c) => c.code === countryCode
+                    );
+                    const countryName = country ? country.name : countryCode;
+                    const cityLogsForCountry = httpLogs[countryCode] || {};
 
-                return (
-                  <div key={countryCode} className={styles.countryChart}>
-                    <div className={styles.countryHeader}>
-                      <ReactCountryFlag
-                        countryCode={countryCode}
-                        svg
-                        style={{
-                          width: "24px",
-                          height: "16px",
-                          borderRadius: "5px",
-                        }}
-                        title={countryName}
-                      />
-                      <p className={styles.countryName}>{countryName}</p>
-                    </div>
-                    <div className={styles.chartContainer}>
-                      <CountryChart
-                        cityLogs={cityLogsForCountry}
-                        cities={cities}
-                        timeRange={timeRange}
-                        dataType={dataType}
-                        aggregationType={aggregationType}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                    return (
+                      <div key={countryCode} className={styles.countryChart}>
+                        <div className={styles.countryHeader}>
+                          <ReactCountryFlag
+                            countryCode={countryCode}
+                            svg
+                            style={{
+                              width: "24px",
+                              height: "16px",
+                              borderRadius: "5px",
+                            }}
+                            title={countryName}
+                          />
+                          <p className={styles.countryName}>{countryName}</p>
+                        </div>
+                        <div className={styles.chartContainer}>
+                          <CountryChart
+                            cityLogs={cityLogsForCountry}
+                            cities={cities}
+                            timeRange={timeRange}
+                            dataType={dataType}
+                            aggregationType={aggregationType}
+                            isChartLoading={isChartLoading}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
           </div>
         </div>
       ))}
