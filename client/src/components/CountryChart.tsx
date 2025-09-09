@@ -241,7 +241,7 @@ const CountryChart = ({
             let innerHtml = "<thead>";
 
             if (tooltipModel.dataPoints.length > 0) {
-              const firstPoint = tooltipModel.dataPoints;
+              const firstPoint = tooltipModel.dataPoints[0];
               if (firstPoint && firstPoint.parsed) {
                 const formattedDate = new Date(
                   firstPoint.parsed.x
@@ -424,7 +424,9 @@ const CountryChart = ({
     },
   });
 
-  return <Line ref={chartRef} options={getOptions(timeRange)} data={chartData} />;
+  return (
+    <Line ref={chartRef} options={getOptions(timeRange)} data={chartData} />
+  );
 };
 
 export default CountryChart;
