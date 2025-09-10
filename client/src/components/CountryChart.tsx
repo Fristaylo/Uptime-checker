@@ -149,7 +149,7 @@ const CountryChart = ({
       pointRadius: 0,
       pointHoverRadius: 7,
       pointHitRadius: 20,
-      tension: 0.4,
+      tension: 0.2,
       fill: true,
       spanGaps: false,
     };
@@ -334,21 +334,19 @@ const CountryChart = ({
 
             if (!log) return "";
 
-              const tooltipLines = [
-                city,
-                `Общее время: ${
-                  context.parsed.y !== null
-                    ? context.parsed.y.toFixed(0)
-                    : "N/A"
-                }мс`,
-                `Статус: ${log.status_code}`,
-                `DNS: ${log.dns_time}мс`,
-                `TCP: ${log.tcp_time}мс`,
-                `TLS: ${log.tls_time}мс`,
-                `Первый байт: ${log.first_byte_time}мс`,
-                `Загрузка: ${log.download_time}мс`,
-              ];
-              return tooltipLines.join(" | ");
+            const tooltipLines = [
+              city,
+              `Общее время: ${
+                context.parsed.y !== null ? context.parsed.y.toFixed(0) : "N/A"
+              }мс`,
+              `Статус: ${log.status_code}`,
+              `DNS: ${log.dns_time}мс`,
+              `TCP: ${log.tcp_time}мс`,
+              `TLS: ${log.tls_time}мс`,
+              `Первый байт: ${log.first_byte_time}мс`,
+              `Загрузка: ${log.download_time}мс`,
+            ];
+            return tooltipLines.join(" | ");
           },
         },
       },
