@@ -60,7 +60,7 @@ jobs:
 
             # Запускаем новую версию
             docker-compose pull app-$NEW_COLOR
-            docker-compose up -d --no-deps --build app-$NEW_COLOR
+            docker-compose up -d --no-deps --build --no-cache app-$NEW_COLOR
 
             # Ждем запуска и проверяем
             sleep 30

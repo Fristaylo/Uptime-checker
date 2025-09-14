@@ -3,21 +3,16 @@ version: "3.8"
 services:
   nginx:
     image: nginx:latest
-    container_name: nginx
     ports:
       - "80:80"
     volumes:
-      - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template
-    environment:
-      - UPSTREAM_APP=app-blue
+      - ./docker/nginx:/etc/nginx/conf.d
     depends_on:
       - app-blue
       - app-green
-    command: /bin/sh -c "envsubst < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
 
   app-blue:
     build: .
-    container_name: app-blue
     depends_on:
       - db
     environment:
@@ -29,7 +24,6 @@ services:
 
   app-green:
     build: .
-    container_name: app-green
     depends_on:
       - db
     environment:
@@ -41,7 +35,6 @@ services:
 
   db:
     image: postgres:13
-    container_name: db
     ports:
       - "5432:5432"
     environment:
