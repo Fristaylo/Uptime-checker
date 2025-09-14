@@ -5,6 +5,7 @@ import CountryChart from "./CountryChart";
 import CountryChartPlug from "./CountryChartPlug";
 import ReactCountryFlag from "react-country-flag";
 import { countries, domains } from "../data/constants";
+import ButtonGroup from "./ButtonGroup";
 
 interface Log {
   created_at: string;
@@ -51,6 +52,17 @@ const Dashboard = () => {
   const [aggregationType, setAggregationType] = useState("standard");
   const { domain } = useParams<{ domain: string }>();
 
+  const timeRangeOptions = [
+    { value: "week", label: "Неделя" },
+    { value: "day", label: "День" },
+    { value: "4hours", label: "4 часа" },
+  ];
+
+  const aggregationTypeOptions = [
+    { value: "standard", label: "Стандарт" },
+    { value: "hour", label: "Час" },
+  ];
+
   const fetchData = async () => {
     try {
       if (domain) {
@@ -77,7 +89,9 @@ const Dashboard = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: Log[] = await response.json();
-        const filteredData = data.filter(log => log.country && allowedCountries.includes(log.country));
+        const filteredData = data.filter(
+          (log) => log.country && allowedCountries.includes(log.country)
+        );
 
         const groupedByDomain = filteredData.reduce((acc, log) => {
           if (log.domain && log.city) {
@@ -124,12 +138,10 @@ const Dashboard = () => {
         <div className={styles.header}>
           <h2>Статусы доменов</h2>
           <div className={styles.controls}>
-            <label htmlFor="timeRange-select">Выбор времени:</label>
-            <select
-              id="timeRange-select"
+            <ButtonGroup
+              options={timeRangeOptions}
               value={timeRange}
-              onChange={(e) => {
-                const newTimeRange = e.target.value;
+              onChange={(newTimeRange) => {
                 if (newTimeRange === "week" || newTimeRange === "day") {
                   setAggregationType("hour");
                 } else {
@@ -137,22 +149,12 @@ const Dashboard = () => {
                 }
                 setTimeRange(newTimeRange);
               }}
-            >
-              <option value="week">7 дней</option>
-              <option value="day">День</option>
-              <option value="4hours">4 часа</option>
-              <option value="hour">Час</option>
-              <option value="30minutes">30 минут</option>
-            </select>
-            <label htmlFor="aggregation-select">Группировка:</label>
-            <select
-              id="aggregation-select"
+            />
+            <ButtonGroup
+              options={aggregationTypeOptions}
               value={aggregationType}
-              onChange={(e) => setAggregationType(e.target.value)}
-            >
-              <option value="standard">Стандарт</option>
-              <option value="hour">Час</option>
-            </select>
+              onChange={setAggregationType}
+            />
           </div>
         </div>
         <div className={styles.chartsGrid}>
@@ -192,12 +194,10 @@ const Dashboard = () => {
       <div className={styles.header}>
         <h2>Статус {domain}</h2>
         <div className={styles.controls}>
-          <label htmlFor="timeRange-select">Выбор времени:</label>
-          <select
-            id="timeRange-select"
+          <ButtonGroup
+            options={timeRangeOptions}
             value={timeRange}
-            onChange={(e) => {
-              const newTimeRange = e.target.value;
+            onChange={(newTimeRange) => {
               if (newTimeRange === "week" || newTimeRange === "day") {
                 setAggregationType("hour");
               } else {
@@ -205,22 +205,12 @@ const Dashboard = () => {
               }
               setTimeRange(newTimeRange);
             }}
-          >
-            <option value="week">7 дней</option>
-            <option value="day">День</option>
-            <option value="4hours">4 часа</option>
-            <option value="hour">Час</option>
-            <option value="30minutes">30 минут</option>
-          </select>
-          <label htmlFor="aggregation-select">Группировка:</label>
-          <select
-            id="aggregation-select"
+          />
+          <ButtonGroup
+            options={aggregationTypeOptions}
             value={aggregationType}
-            onChange={(e) => setAggregationType(e.target.value)}
-          >
-            <option value="standard">Стандарт</option>
-            <option value="hour">Час</option>
-          </select>
+            onChange={setAggregationType}
+          />
         </div>
       </div>
       {Object.entries(locationGroups).map(([interval, locations]) => (
