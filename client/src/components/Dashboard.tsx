@@ -48,7 +48,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isChartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState("hour");
+  const [timeRange, setTimeRange] = useState("week");
   const [aggregationType, setAggregationType] = useState("standard");
   const { domain } = useParams<{ domain: string }>();
 
@@ -142,7 +142,7 @@ const Dashboard = () => {
               options={timeRangeOptions}
               value={timeRange}
               onChange={(newTimeRange) => {
-                if (newTimeRange === "week" || newTimeRange === "day") {
+                if (newTimeRange === "week") {
                   setAggregationType("hour");
                 } else {
                   setAggregationType("standard");
