@@ -1,36 +1,16 @@
 version: "3.8"
 
 services:
-  nginx:
-    image: nginx:latest
+  app:
+    build: .
     ports:
       - "80:80"
-    volumes:
-      - ./docker/nginx:/etc/nginx/conf.d
-    depends_on:
-      - app-blue
-      - app-green
-
-  app-blue:
-    build: .
     depends_on:
       - db
     environment:
       - DATABASE_URL=postgres://uptime_user:password@db:5432/uptime_checker
       - GLOBALPING_API_KEY=${GLOBALPING_API_KEY}
       - GLOBALPING_API_KEY2=${GLOBALPING_API_KEY2}
-      - GLOBALPING_API_KEY3=${GLOBALPING_API_KEY3}
-      - GLOBALPING_API_KEY4=${GLOBALPING_API_KEY4}
-
-  app-green:
-    build: .
-    depends_on:
-      - db
-    environment:
-      - DATABASE_URL=postgres://uptime_user:password@db:5432/uptime_checker
-      - GLOBALPING_API_KEY=${GLOBALPING_API_KEY}
-      - GLOBALPING_API_KEY2=${GLOBALPING_API_KEY2}
-      - GLOBALPING_API_KEY4=${GLOBALPING_API_KEY4}
       - GLOBALPING_API_KEY3=${GLOBALPING_API_KEY3}
 
   db:

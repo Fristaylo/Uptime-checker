@@ -1,4 +1,4 @@
-name: CI/CD Docker with Blue-Green Deployment
+name: CI/CD Docker
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           build-args: |
             GLOBALPING_API_KEY=${{ secrets.GLOBALPING_API_KEY }}
             GLOBALPING_API_KEY2=${{ secrets.GLOBALPING_API_KEY2 }}
-            GLOBALPING_API_KEY3=${{ secrets.GLOBALPING_API_KEY3 }}
+             GLOBALPING_API_KEY3=${{ secrets.GLOBALPING_API_KEY3 }}
 
   deploy:
     needs: build-and-push
@@ -46,31 +46,13 @@ jobs:
             fi
             cd uptime-checker
             git pull
-
-            # Определяем текущий и новый цвет
-            if docker ps --format '{{.Names}}' | grep -q 'app-blue'; then
-              CURRENT_COLOR="blue"
-              NEW_COLOR="green"
-            else
-              CURRENT_COLOR="green"
-              NEW_COLOR="blue"
-            fi
-            
-            echo "Current color: $CURRENT_COLOR, New color: $NEW_COLOR"
-
-            # Запускаем новую версию
-            docker-compose pull app-$NEW_COLOR
-            docker-compose up -d --no-deps --build --no-cache app-$NEW_COLOR
-
-            # Ждем запуска и проверяем
-            sleep 30
-            
-            # Переключаем трафик
-            sed -i "s/app-$CURRENT_COLOR/app-$NEW_COLOR/g" docker/nginx/default.conf
-            docker-compose exec nginx nginx -s reload
-
-            # Останавливаем старую версию
-            docker-compose stop app-$CURRENT_COLOR
-            
-            # Очищаем старые образы
+            sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            echo "GLOBALPING_API_KEY=${{ secrets.GLOBALPING_API_KEY }}" > .env
+            echo "GLOBALPING_API_KEY3=${{ secrets.GLOBALPING_API_KEY3 }}" >> .env
+            echo "GLOBALPING_API_KEY2=${{ secrets.GLOBALPING_API_KEY2 }}" >> .env
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
+            docker-compose pull
+            docker-compose up -d --build
             docker image prune -f
