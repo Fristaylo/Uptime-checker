@@ -112,6 +112,7 @@ app.get("/http-logs", async (req, res) => {
 const domains = [
   { name: "site.yummyani.me", apiKeyEnv: "GLOBALPING_API_KEY" },
   { name: "ru.yummyani.me", apiKeyEnv: "GLOBALPING_API_KEY2" },
+  { name: "en.yummyani.me", apiKeyEnv: "GLOBALPING_API_KEY3" },
 ];
 
 const locationGroups = {

@@ -18,7 +18,7 @@ export const countries = [
   { code: "AM", name: "Армения" },
 ];
 
-export const domains = ["site.yummyani.me", "ru.yummyani.me"];
+export const domains = ["site.yummyani.me", "ru.yummyani.me", "en.yummyani.me"];
 
 export const cityTranslations: { [key: string]: string } = {
   Moscow: "Москва",

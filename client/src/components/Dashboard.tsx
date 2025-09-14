@@ -38,6 +38,7 @@ interface LocationGroups {
 }
 
 const Dashboard = () => {
+  const allowedCountries = ["RU", "UA", "KZ", "BY"];
   const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
   const [locationGroups, setLocationGroups] = useState<LocationGroups>({});
   const [domainLogs, setDomainLogs] = useState<{ [domain: string]: CityLogs }>(
@@ -76,8 +77,9 @@ const Dashboard = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: Log[] = await response.json();
+        const filteredData = data.filter(log => log.country && allowedCountries.includes(log.country));
 
-        const groupedByDomain = data.reduce((acc, log) => {
+        const groupedByDomain = filteredData.reduce((acc, log) => {
           if (log.domain && log.city) {
             const domain = log.domain;
             const city = log.city;
