@@ -48,19 +48,23 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isChartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState("week");
-  const [aggregationType, setAggregationType] = useState("standard");
+  const [timeRange, setTimeRange] = useState(
+    () => localStorage.getItem("timeRange") || "week"
+  );
+  const [aggregationType, setAggregationType] = useState(
+    () => localStorage.getItem("aggregationType") || "hour"
+  );
   const { domain } = useParams<{ domain: string }>();
 
   const timeRangeOptions = [
     { value: "week", label: "Неделя" },
     { value: "day", label: "День" },
-    { value: "4hours", label: "4 часа" },
+    { value: "hour", label: "Час" },
   ];
 
   const aggregationTypeOptions = [
-    { value: "standard", label: "Стандарт" },
-    { value: "hour", label: "Час" },
+    { value: "standard", label: "По стандарту" },
+    { value: "hour", label: "По часам" },
   ];
 
   const fetchData = async () => {
@@ -129,6 +133,18 @@ const Dashboard = () => {
     const intervalId = setInterval(fetchData, 30000);
     return () => clearInterval(intervalId);
   }, [domain, timeRange]);
+  useEffect(() => {
+    if (timeRange === "week") {
+      setAggregationType("hour");
+    } else {
+      setAggregationType("standard");
+    }
+  }, [timeRange]);
+
+  useEffect(() => {
+    localStorage.setItem("timeRange", timeRange);
+    localStorage.setItem("aggregationType", aggregationType);
+  }, [timeRange, aggregationType]);
 
   if (error) return <div>Error: {error}</div>;
 
@@ -141,14 +157,7 @@ const Dashboard = () => {
             <ButtonGroup
               options={timeRangeOptions}
               value={timeRange}
-              onChange={(newTimeRange) => {
-                if (newTimeRange === "week") {
-                  setAggregationType("hour");
-                } else {
-                  setAggregationType("standard");
-                }
-                setTimeRange(newTimeRange);
-              }}
+              onChange={setTimeRange}
             />
             <ButtonGroup
               options={aggregationTypeOptions}
@@ -197,14 +206,7 @@ const Dashboard = () => {
           <ButtonGroup
             options={timeRangeOptions}
             value={timeRange}
-            onChange={(newTimeRange) => {
-              if (newTimeRange === "week" || newTimeRange === "day") {
-                setAggregationType("hour");
-              } else {
-                setAggregationType("standard");
-              }
-              setTimeRange(newTimeRange);
-            }}
+            onChange={setTimeRange}
           />
           <ButtonGroup
             options={aggregationTypeOptions}
