@@ -50,11 +50,10 @@ jobs:
             # Force update to the latest version
             git reset --hard HEAD
             git pull
-            # Install docker-compose if not present
-            if ! [ -x "$(command -v docker-compose)" ]; then
-              sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            fi
+            # Install/Update docker compose plugin
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            sudo curl -SL "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/lib/docker/cli-plugins/docker-compose
+            sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
             # Create .env file
             echo "GLOBALPING_API_KEY=${{ secrets.GLOBALPING_API_KEY }}" > .env
             echo "GLOBALPING_API_KEY2=${{ secrets.GLOBALPING_API_KEY2 }}" >> .env
@@ -64,6 +63,6 @@ jobs:
             sudo systemctl stop nginx || true
             sudo systemctl disable nginx || true
             # Pull the latest image from Docker Hub
-            docker-compose pull
+            docker compose pull
             # Run the new container from the pulled image
-            docker-compose up -d
+            docker compose up -d
