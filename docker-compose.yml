@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    build: .
+    image: fristaylo/uptime-checker:latest
     ports:
       - "80:80"
     depends_on:
