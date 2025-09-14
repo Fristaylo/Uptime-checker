@@ -45,6 +45,10 @@
   height: 300px;
   flex-direction: column;
   min-width: 0;
+
+  @media (max-width: 500px) {
+    padding: 10px;
+  }
 }
 
 .chartContainer {

@@ -1,5 +1,5 @@
 import { Line } from "react-chartjs-2";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import styles from "./CountryChart.module.scss";
 import {
   Chart as ChartJS,
@@ -92,6 +92,13 @@ const CountryChart = ({
   aggregationType,
   isChartLoading,
 }: CountryChartProps) => {
+  const [width, setWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   type ChartData = {
     x: number;
     y: number | null;
@@ -200,7 +207,7 @@ const CountryChart = ({
     datasets: sortedDatasets,
   };
 
-  const getOptions = (timeRange: string) => {
+  const getOptions = (timeRange: string, width: number) => {
     const timeSettings: {
       [key: string]: {
         unit: "day" | "hour" | "minute";
@@ -356,25 +363,32 @@ const CountryChart = ({
             tooltipEl.style.wordWrap = "break-word";
             tooltipEl.style.padding = "5px";
 
-            let left = position.left + window.pageXOffset + tooltipModel.caretX;
-            let top = position.top + window.pageYOffset + 225;
+            if (width <= 500) {
+              tooltipEl.style.width = position.width + "px";
+              tooltipEl.style.left = position.left + "px";
+              tooltipEl.style.top =
+                position.top + window.pageYOffset + 225 + "px";
+            } else {
+              let left =
+                position.left + window.pageXOffset + tooltipModel.caretX;
+              let top = position.top + window.pageYOffset + 225;
 
-            left -= tooltipEl.offsetWidth / 2;
+              left -= tooltipEl.offsetWidth / 2;
 
-            if (left < position.left + window.pageXOffset) {
-              left = position.left + window.pageXOffset;
+              if (left < position.left + window.pageXOffset) {
+                left = position.left + window.pageXOffset;
+              }
+
+              if (
+                left + tooltipEl.offsetWidth >
+                position.right + window.pageXOffset
+              ) {
+                left =
+                  position.right + window.pageXOffset - tooltipEl.offsetWidth;
+              }
+              tooltipEl.style.left = left + "px";
+              tooltipEl.style.top = top + "px";
             }
-
-            if (
-              left + tooltipEl.offsetWidth >
-              position.right + window.pageXOffset
-            ) {
-              left =
-                position.right + window.pageXOffset - tooltipEl.offsetWidth;
-            }
-
-            tooltipEl.style.left = left + "px";
-            tooltipEl.style.top = top + "px";
           },
           titleFont: {
             size: 16,
@@ -431,6 +445,7 @@ const CountryChart = ({
       },
       scales: {
         y: {
+          display: width > 500,
           beginAtZero: true,
           grid: {
             color: "rgba(255, 255, 255, 0.1)",
@@ -467,7 +482,11 @@ const CountryChart = ({
   };
 
   return (
-    <Line ref={chartRef} options={getOptions(timeRange)} data={chartData} />
+    <Line
+      ref={chartRef}
+      options={getOptions(timeRange, width)}
+      data={chartData}
+    />
   );
 };
 
