@@ -3,6 +3,7 @@ version: "3.8"
 services:
   nginx:
     image: nginx:latest
+    container_name: nginx
     ports:
       - "80:80"
     volumes:
@@ -16,6 +17,7 @@ services:
 
   app-blue:
     build: .
+    container_name: app-blue
     depends_on:
       - db
     environment:
@@ -27,6 +29,7 @@ services:
 
   app-green:
     build: .
+    container_name: app-green
     depends_on:
       - db
     environment:
@@ -38,6 +41,7 @@ services:
 
   db:
     image: postgres:13
+    container_name: db
     ports:
       - "5432:5432"
     environment:
