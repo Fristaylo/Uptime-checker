@@ -171,7 +171,12 @@ const Dashboard = () => {
             ? Array.from({ length: domains.length }).map((_, index) => (
                 <CountryChartPlug key={index} />
               ))
-            : Object.entries(domainLogs).map(([domain, cityLogs]) => (
+            : Object.entries(domainLogs)
+    .sort(([domainA], [domainB]) => {
+      const domainOrder = ["site.yummyani.me", "ru.yummyani.me", "en.yummyani.me"];
+      return domainOrder.indexOf(domainA) - domainOrder.indexOf(domainB);
+    })
+    .map(([domain, cityLogs]) => (
                 <NavLink
                   to={`${domain}`}
                   key={domain}
