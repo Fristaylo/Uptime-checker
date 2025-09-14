@@ -8,6 +8,11 @@
     text-align: center;
   }
 
+  h3 {
+    margin: 15px 0 10px 0;
+    text-align: center;
+  }
+
   @media (max-width: 950px) {
     padding: 5px;
 
@@ -16,7 +21,7 @@
     }
 
     h3 {
-      margin: 10px 0 10px 0;
+      margin: 10px 0 5px 0;
     }
   }
 }

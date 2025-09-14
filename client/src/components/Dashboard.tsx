@@ -215,7 +215,7 @@ const Dashboard = () => {
       </div>
       {Object.entries(locationGroups).map(([interval, locations]) => (
         <div key={interval}>
-          <h3>{interval.replace("min", " min")} locations</h3>
+          <h3>Локации проверяются раз в {interval.replace("min", " мин.")}</h3>
           <div className={styles.chartsGrid}>
             {loading
               ? countries.map((_, index) => <CountryChartPlug key={index} />)
