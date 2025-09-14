@@ -173,29 +173,36 @@ const Dashboard = () => {
                 <CountryChartPlug key={index} />
               ))
             : Object.entries(domainLogs)
-    .sort(([domainA], [domainB]) => {
-      const domainOrder = ["site.yummyani.me", "ru.yummyani.me", "en.yummyani.me"];
-      return domainOrder.indexOf(domainA) - domainOrder.indexOf(domainB);
-    })
-    .map(([domain, cityLogs]) => (
-                <div key={domain} className={styles.countryChart}>
-                  <div className={styles.countryHeader}>
-                    <p className={styles.countryName}>{domain}</p>
-                    <NavLink to={`${domain}`}>
-                      <button>Подробнее</button>
-                    </NavLink>
+                .sort(([domainA], [domainB]) => {
+                  const domainOrder = [
+                    "site.yummyani.me",
+                    "site.yummy-ani.me",
+                    "ru.yummyani.me",
+                    "en.yummyani.me",
+                  ];
+                  return (
+                    domainOrder.indexOf(domainA) - domainOrder.indexOf(domainB)
+                  );
+                })
+                .map(([domain, cityLogs]) => (
+                  <div key={domain} className={styles.countryChart}>
+                    <div className={styles.countryHeader}>
+                      <p className={styles.countryName}>{domain}</p>
+                      <NavLink to={`${domain}`}>
+                        <button>Подробнее</button>
+                      </NavLink>
+                    </div>
+                    <div className={styles.chartContainer}>
+                      <CountryChart
+                        cityLogs={cityLogs}
+                        cities={Object.keys(cityLogs)}
+                        timeRange={timeRange}
+                        aggregationType={aggregationType}
+                        isChartLoading={isChartLoading}
+                      />
+                    </div>
                   </div>
-                  <div className={styles.chartContainer}>
-                    <CountryChart
-                      cityLogs={cityLogs}
-                      cities={Object.keys(cityLogs)}
-                      timeRange={timeRange}
-                      aggregationType={aggregationType}
-                      isChartLoading={isChartLoading}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))}
         </div>
       </div>
     );
@@ -254,9 +261,7 @@ const Dashboard = () => {
             <div className={styles.chartsGrid}>
               {locations
                 .reduce((acc, { country, city }) => {
-                  let countryGroup = acc.find(
-                    (g) => g.countryCode === country
-                  );
+                  let countryGroup = acc.find((g) => g.countryCode === country);
                   if (!countryGroup) {
                     countryGroup = { countryCode: country, cities: [] };
                     acc.push(countryGroup);
@@ -270,9 +275,7 @@ const Dashboard = () => {
                     countries.findIndex((c) => c.code === b.countryCode)
                 )
                 .map(({ countryCode, cities }) => {
-                  const country = countries.find(
-                    (c) => c.code === countryCode
-                  );
+                  const country = countries.find((c) => c.code === countryCode);
                   const countryName = country ? country.name : countryCode;
                   const cityLogsForCountry = httpLogs[countryCode] || {};
 
