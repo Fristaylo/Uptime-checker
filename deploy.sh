@@ -24,22 +24,16 @@ fi
 echo "Current active environment: $ACTIVE_COLOR"
 echo "Deploying new version to: $INACTIVE_COLOR"
 
-# Build and start the new inactive environment
-docker-compose up -d --build app-$INACTIVE_COLOR
+# Build and start the new inactive environment AND nginx
+INACTIVE_SERVICE_NAME="app-$INACTIVE_COLOR"
+docker-compose up -d --build $INACTIVE_SERVICE_NAME nginx
 
-echo "New container app-$INACTIVE_COLOR is starting..."
+echo "New container $INACTIVE_SERVICE_NAME is starting..."
 echo "Waiting for $WAIT_TIME seconds for the container to initialize..."
 
 # --- Health Check Placeholder ---
 # In a production environment, you should replace this sleep
 # with a loop that polls a health check endpoint.
-# For example:
-#
-# until $(curl --output /dev/null --silent --head --fail http://localhost:PORT/health); do
-#   printf '.'
-#   sleep 5
-# done
-#
 sleep $WAIT_TIME
 
 echo "Container is assumed to be healthy."
@@ -49,7 +43,8 @@ echo "Switching traffic to $INACTIVE_COLOR..."
 ./switch-env.sh $INACTIVE_COLOR
 
 # Stop the old active environment
+ACTIVE_SERVICE_NAME="app-$ACTIVE_COLOR"
 echo "Stopping old environment: $ACTIVE_COLOR..."
-docker-compose stop app-$ACTIVE_COLOR
+docker-compose stop $ACTIVE_SERVICE_NAME
 
 echo "Deployment to $INACTIVE_COLOR is complete."
