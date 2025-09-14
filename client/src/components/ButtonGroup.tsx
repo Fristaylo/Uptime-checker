@@ -17,9 +17,7 @@ const ButtonGroup = ({ options, value, onChange }: ButtonGroupProps) => {
       {options.map((option) => (
         <button
           key={option.value}
-          className={`${styles.button} ${
-            value === option.value ? styles.active : ""
-          }`}
+          className={value === option.value ? styles.active : ""}
           onClick={() => onChange(option.value)}
         >
           {option.label}

@@ -41,7 +41,8 @@ p {
 }
 
 button {
-  padding: 10px 15px;
+  height: 38px;
+  padding: 0 15px;
   border-radius: 10px;
   border: none;
   font-size: 14px;
@@ -52,4 +53,13 @@ button {
   outline: none;
   transition: background-color 0.3s, color 0.3s;
   color: #e0e0e0;
+
+  &:hover {
+    background-color: #4d4d4d;
+  }
+
+  &:active {
+    background-color: #2e2e2e;
+    color: white;
+  }
 }

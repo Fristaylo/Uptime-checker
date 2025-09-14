@@ -55,7 +55,14 @@
 .countryHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.countryIdentifier {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
 }
 
 .countryName {
@@ -110,19 +117,13 @@
   background-color: #1d1d1d;
   padding: 10px 0;
   border-radius: 10px;
+
+  @media (max-width: 350px) {
+    column-gap: 0px;
+  }
 }
 
-.active {
-  border-bottom: 2px solid #007bff;
-  color: #007bff;
-}
 .countryChartLink {
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease-in-out;
-
-  &:hover {
-    transform: scale(1.01);
-    transition: transform 0.3s ease-in-out;
-  }
 }

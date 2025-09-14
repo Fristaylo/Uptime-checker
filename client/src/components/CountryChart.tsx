@@ -357,7 +357,7 @@ const CountryChart = ({
             tooltipEl.style.padding = "5px";
 
             let left = position.left + window.pageXOffset + tooltipModel.caretX;
-            let top = position.top + window.pageYOffset + 230; // Fixed top position
+            let top = position.top + window.pageYOffset + 225;
 
             left -= tooltipEl.offsetWidth / 2;
 

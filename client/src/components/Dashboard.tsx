@@ -177,26 +177,23 @@ const Dashboard = () => {
       return domainOrder.indexOf(domainA) - domainOrder.indexOf(domainB);
     })
     .map(([domain, cityLogs]) => (
-                <NavLink
-                  to={`${domain}`}
-                  key={domain}
-                  className={styles.countryChartLink}
-                >
-                  <div className={styles.countryChart}>
-                    <div className={styles.countryHeader}>
-                      <p className={styles.countryName}>{domain}</p>
-                    </div>
-                    <div className={styles.chartContainer}>
-                      <CountryChart
-                        cityLogs={cityLogs}
-                        cities={Object.keys(cityLogs)}
-                        timeRange={timeRange}
-                        aggregationType={aggregationType}
-                        isChartLoading={isChartLoading}
-                      />
-                    </div>
+                <div key={domain} className={styles.countryChart}>
+                  <div className={styles.countryHeader}>
+                    <p className={styles.countryName}>{domain}</p>
+                    <NavLink to={`${domain}`}>
+                      <button>Подробнее</button>
+                    </NavLink>
                   </div>
-                </NavLink>
+                  <div className={styles.chartContainer}>
+                    <CountryChart
+                      cityLogs={cityLogs}
+                      cities={Object.keys(cityLogs)}
+                      timeRange={timeRange}
+                      aggregationType={aggregationType}
+                      isChartLoading={isChartLoading}
+                    />
+                  </div>
+                </div>
               ))}
         </div>
       </div>
@@ -220,39 +217,68 @@ const Dashboard = () => {
           />
         </div>
       </div>
-      {Object.entries(locationGroups).map(([interval, locations]) => (
-        <div key={interval}>
-          <h3>Локации проверяются раз в {interval.replace("min", " мин.")}</h3>
-          <div className={styles.chartsGrid}>
-            {loading
-              ? countries.map((_, index) => <CountryChartPlug key={index} />)
-              : locations
-                  .reduce((acc, { country, city }) => {
-                    let countryGroup = acc.find(
-                      (g) => g.countryCode === country
-                    );
-                    if (!countryGroup) {
-                      countryGroup = { countryCode: country, cities: [] };
-                      acc.push(countryGroup);
-                    }
-                    countryGroup.cities.push(city);
-                    return acc;
-                  }, [] as { countryCode: string; cities: string[] }[])
-                  .sort(
-                    (a, b) =>
-                      countries.findIndex((c) => c.code === a.countryCode) -
-                      countries.findIndex((c) => c.code === b.countryCode)
-                  )
-                  .map(({ countryCode, cities }) => {
-                    const country = countries.find(
-                      (c) => c.code === countryCode
-                    );
-                    const countryName = country ? country.name : countryCode;
-                    const cityLogsForCountry = httpLogs[countryCode] || {};
+      {loading ? (
+        <div>
+          <div>
+            <h3>Локации проверяются раз в 2 мин.</h3>
+            <div className={styles.chartsGrid}>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <CountryChartPlug key={index} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3>Локации проверяются раз в 5 мин.</h3>
+            <div className={styles.chartsGrid}>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <CountryChartPlug key={index} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3>Локации проверяются раз в 6 мин.</h3>
+            <div className={styles.chartsGrid}>
+              {Array.from({ length: 10 }).map((_, index) => (
+                <CountryChartPlug key={index} />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        Object.entries(locationGroups).map(([interval, locations]) => (
+          <div key={interval}>
+            <h3>
+              Локации проверяются раз в {interval.replace("min", " мин.")}
+            </h3>
+            <div className={styles.chartsGrid}>
+              {locations
+                .reduce((acc, { country, city }) => {
+                  let countryGroup = acc.find(
+                    (g) => g.countryCode === country
+                  );
+                  if (!countryGroup) {
+                    countryGroup = { countryCode: country, cities: [] };
+                    acc.push(countryGroup);
+                  }
+                  countryGroup.cities.push(city);
+                  return acc;
+                }, [] as { countryCode: string; cities: string[] }[])
+                .sort(
+                  (a, b) =>
+                    countries.findIndex((c) => c.code === a.countryCode) -
+                    countries.findIndex((c) => c.code === b.countryCode)
+                )
+                .map(({ countryCode, cities }) => {
+                  const country = countries.find(
+                    (c) => c.code === countryCode
+                  );
+                  const countryName = country ? country.name : countryCode;
+                  const cityLogsForCountry = httpLogs[countryCode] || {};
 
-                    return (
-                      <div key={countryCode} className={styles.countryChart}>
-                        <div className={styles.countryHeader}>
+                  return (
+                    <div key={countryCode} className={styles.countryChart}>
+                      <div className={styles.countryHeader}>
+                        <div className={styles.countryIdentifier}>
                           <ReactCountryFlag
                             countryCode={countryCode}
                             svg
@@ -265,21 +291,23 @@ const Dashboard = () => {
                           />
                           <p className={styles.countryName}>{countryName}</p>
                         </div>
-                        <div className={styles.chartContainer}>
-                          <CountryChart
-                            cityLogs={cityLogsForCountry}
-                            cities={cities}
-                            timeRange={timeRange}
-                            aggregationType={aggregationType}
-                            isChartLoading={isChartLoading}
-                          />
-                        </div>
                       </div>
-                    );
-                  })}
+                      <div className={styles.chartContainer}>
+                        <CountryChart
+                          cityLogs={cityLogsForCountry}
+                          cities={cities}
+                          timeRange={timeRange}
+                          aggregationType={aggregationType}
+                          isChartLoading={isChartLoading}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 };

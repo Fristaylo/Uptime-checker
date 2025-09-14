@@ -3,11 +3,11 @@
   gap: 10px;
 }
 
-.button:hover {
-  background-color: #141414;
-}
-
-.button.active {
+.active {
   background-color: #119cdd;
   color: white;
+
+  &:hover {
+    background-color: #119cdd;
+  }
 }
