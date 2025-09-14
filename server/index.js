@@ -41,6 +41,9 @@ app.get("/http-logs", async (req, res) => {
     const { timeRange, domain } = req.query;
     let interval;
     switch (timeRange) {
+      case "month":
+        interval = "1 month";
+        break;
       case "week":
         interval = "7 day";
         break;
@@ -325,23 +328,6 @@ const httpCheckAndSave = async (locations) => {
   }
 };
 
-const cleanupOldLogs = async () => {
-  console.log(
-    `--- Running cleanup of old logs at ${new Date().toISOString()} ---`
-  );
-  try {
-    const httpLogsQuery = `DELETE FROM http_logs WHERE created_at < NOW() - INTERVAL '7 days'`;
-
-    const httpResult = await pool.query(httpLogsQuery);
-
-    console.log(
-      `Cleanup successful. Removed ${httpResult.rowCount} from http_logs.`
-    );
-  } catch (err) {
-    console.error("Failed to cleanup old logs:", err.message);
-  }
-};
-
 app.get("/locations", (req, res) => {
   res.json(locationGroups);
 });
@@ -349,7 +335,7 @@ app.get("/locations", (req, res) => {
 app.listen(port, async () => {
   console.log(`Server listening at http://localhost:${port}`);
   await createHttpTable();
-  await cleanupOldLogs();
+  
 
   const runChecks = (locations) => {
     httpCheckAndSave(locations).catch((err) =>
@@ -364,5 +350,5 @@ app.listen(port, async () => {
   setInterval(() => runChecks(locationGroups["2min"]), 3 * 60 * 1000);
   setInterval(() => runChecks(locationGroups["5min"]), 6 * 60 * 1000);
   setInterval(() => runChecks(locationGroups["6min"]), 7 * 60 * 1000);
-  setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000); // Run once a day
+  
 });

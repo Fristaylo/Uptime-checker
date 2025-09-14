@@ -57,6 +57,7 @@ const Dashboard = () => {
   const { domain } = useParams<{ domain: string }>();
 
   const timeRangeOptions = [
+    { value: "month", label: "Месяц" },
     { value: "week", label: "Неделя" },
     { value: "day", label: "День" },
     { value: "hour", label: "Час" },
@@ -134,7 +135,7 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [domain, timeRange]);
   useEffect(() => {
-    if (timeRange === "week") {
+    if (timeRange === "week" || timeRange === "month") {
       setAggregationType("hour");
     } else {
       setAggregationType("standard");
