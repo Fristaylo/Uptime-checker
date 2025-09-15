@@ -131,3 +131,12 @@
   text-decoration: none;
   color: inherit;
 }
+.staleDataWarning {
+  background-color: #ffc107;
+  color: #333;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: bold;
+}

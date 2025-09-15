@@ -48,6 +48,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isChartLoading, setChartLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isStaleData, setIsStaleData] = useState(false);
   const [timeRange, setTimeRange] = useState(
     () => localStorage.getItem("timeRange") || "week"
   );
@@ -114,8 +115,14 @@ const Dashboard = () => {
         }, {} as { [domain: string]: CityLogs });
         setDomainLogs(groupedByDomain);
       }
+      setIsStaleData(false); // Данные успешно получены, сбрасываем флаг устаревших данных
     } catch (e: any) {
-      setError(e.message);
+      if (Object.keys(httpLogs).length > 0 || Object.keys(domainLogs).length > 0) {
+        setIsStaleData(true); // Есть старые данные, показываем их и устанавливаем флаг
+        console.warn("Failed to fetch new data, displaying stale data:", e.message);
+      } else {
+        setError(e.message); // Нет старых данных, показываем ошибку
+      }
     } finally {
       setLoading(false);
     }
@@ -132,7 +139,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     const intervalId = setInterval(fetchData, 30000);
-    return () => clearInterval(intervalId);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData(); // Принудительно обновляем данные при возвращении на вкладку
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [domain, timeRange]);
   useEffect(() => {
     if (timeRange === "week" || timeRange === "month") {
@@ -167,6 +186,11 @@ const Dashboard = () => {
             />
           </div>
         </div>
+        {isStaleData && (
+          <div className={styles.staleDataWarning}>
+            Данные могут быть устаревшими. Обновление...
+          </div>
+        )}
         <div className={styles.chartsGrid}>
           {loading
             ? Array.from({ length: domains.length }).map((_, index) => (
@@ -225,6 +249,11 @@ const Dashboard = () => {
           />
         </div>
       </div>
+      {isStaleData && (
+        <div className={styles.staleDataWarning}>
+          Данные могут быть устаревшими. Обновление...
+        </div>
+      )}
       {loading ? (
         <div>
           <div>
