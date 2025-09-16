@@ -1,8 +1,49 @@
 {
+  "name": "uptime-checker",
+  "version": "1.0.0",
+  "description": "A simple service for monitoring website availability via HTTP requests using the globalping.io API.",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm start --prefix server\""
+    "start": "npm run start:server",
+    "start:server": "node server/index.js",
+    "start:client": "vite --config client/vite.config.ts",
+    "dev": "concurrently \"npm:start:client\" \"npm:start:server\"",
+    "build": "tsc -b client && vite build --config client/vite.config.ts",
+    "lint": "eslint .",
+    "preview": "vite preview --config client/vite.config.ts"
   },
   "dependencies": {
-    "concurrently": "^9.2.1"
+    "axios": "^1.11.0",
+    "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-crosshair": "^2.0.0",
+    "concurrently": "^9.2.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
+    "pg": "^8.16.3",
+    "react": "^19.1.1",
+    "react-chartjs-2": "^5.3.0",
+    "react-country-flag": "^3.1.0",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.8.2",
+    "react-tooltip": "^5.29.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/chartjs-plugin-crosshair": "^1.1.5",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "sass": "^1.91.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.39.1",
+    "vite": "^7.1.2"
   }
 }
