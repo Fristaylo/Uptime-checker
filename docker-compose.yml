@@ -8,7 +8,7 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://uptime_user:password@db:5432/uptime_checker
+      - DATABASE_URL=${DATABASE_URL}
       - GLOBALPING_API_KEY=${GLOBALPING_API_KEY}
       - GLOBALPING_API_KEY2=${GLOBALPING_API_KEY2}
       - GLOBALPING_API_KEY3=${GLOBALPING_API_KEY3}
@@ -19,9 +19,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=uptime_user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=uptime_checker
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
 
