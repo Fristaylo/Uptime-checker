@@ -7,9 +7,9 @@
   "scripts": {
     "start": "npm run start:server",
     "start:server": "node server/index.js",
-    "start:client": "vite --config client/vite.config.ts",
+    "start:client": "vite client --config client/vite.config.ts",
     "dev": "concurrently \"npm:start:client\" \"npm:start:server\"",
-    "build": "tsc -b client && vite build --config client/vite.config.ts",
+    "build": "tsc -b client && vite build client --config client/vite.config.ts",
     "lint": "eslint .",
     "preview": "vite preview --config client/vite.config.ts"
   },
