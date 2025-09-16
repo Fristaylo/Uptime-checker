@@ -15,9 +15,15 @@
 
   .links {
     margin-bottom: 10px;
+    display: flex;
+    row-gap: 5px;
+    column-gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
 
     a {
-      margin: 0 10px;
       color: var(--color-primary);
       text-decoration: none;
 

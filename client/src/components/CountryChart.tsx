@@ -363,7 +363,7 @@ const CountryChart = ({
             tooltipEl.style.padding =
               tooltipModel.padding + "px " + tooltipModel.padding + "px";
             tooltipEl.style.pointerEvents = "none";
-            tooltipEl.style.backgroundColor = "rgba(51, 51, 51, 1)";
+            tooltipEl.style.backgroundColor = "rgba(36, 36, 36, 1)";
             tooltipEl.style.borderRadius = "5px";
             tooltipEl.style.color = "white";
             tooltipEl.style.maxWidth = "500px";
