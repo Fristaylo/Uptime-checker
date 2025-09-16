@@ -3,7 +3,6 @@
 
   h2 {
     margin-top: 0;
-    color: #fff;
     margin: 10px 0 15px 0;
     text-align: center;
   }
@@ -38,9 +37,9 @@
 }
 
 .countryChart {
-  background-color: #1d1d1d;
+  background-color: var(--color-dark-bg-1);
   padding: 15px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   display: flex;
   height: 300px;
   flex-direction: column;
@@ -71,7 +70,6 @@
 
 .countryName {
   margin-left: 10px;
-  color: #fff;
   font-size: 20px;
 }
 
@@ -94,20 +92,20 @@
 .pingSquare {
   width: 15px;
   height: 15px;
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
 }
 
 .green {
-  background-color: #28a745;
+  background-color: var(--color-green);
 }
 
 .yellow {
-  background-color: #ffc107;
+  background-color: var(--color-yellow);
 }
 
 .red {
-  background-color: #dc3545;
+  background-color: var(--color-red);
 }
 
 .controls {
@@ -118,9 +116,9 @@
   row-gap: 15px;
   column-gap: 30px;
   justify-content: center;
-  background-color: #1d1d1d;
+  background-color: var(--color-dark-bg-1);
   padding: 10px 0;
-  border-radius: 10px;
+  border-radius: var(--border-radius-md);
 
   @media (max-width: 350px) {
     column-gap: 0px;
@@ -132,7 +130,7 @@
   color: inherit;
 }
 .staleDataWarning {
-  background-color: #ffc107;
+  background-color: var(--color-yellow);
   color: #333;
   padding: 10px;
   border-radius: 5px;

@@ -123,6 +123,14 @@ const CountryChart = ({
       }
     }
   }, [isChartLoading]);
+  useEffect(() => {
+    return () => {
+      const tooltipEl = document.getElementById("chartjs-tooltip");
+      if (tooltipEl) {
+        tooltipEl.remove();
+      }
+    };
+  }, []);
 
   const datasets = cities.map((city) => {
     const logs = cityLogs[city] || [];
@@ -362,6 +370,7 @@ const CountryChart = ({
             tooltipEl.style.whiteSpace = "normal";
             tooltipEl.style.wordWrap = "break-word";
             tooltipEl.style.padding = "5px";
+            tooltipEl.style.zIndex = "9999";
 
             if (width <= 500) {
               tooltipEl.style.width = position.width + "px";
