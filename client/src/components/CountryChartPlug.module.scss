@@ -1,7 +1,7 @@
 @import "../styles/variables";
 
 .countryChart {
-  background-color: #1d1d1d;
+  background-color: var(--color-dark-bg-1);
   padding: 15px;
   border-radius: var(--border-radius-md);
   display: flex;
@@ -37,7 +37,7 @@
 .title {
   width: 150px;
   height: 24px;
-  background-color: #272727;
+  background-color: var(--color-bg);
   border-radius: var(--border-radius-sm);
   position: relative;
   overflow: hidden;
@@ -61,7 +61,7 @@
 .dateRange {
   width: 100px;
   height: 20px;
-  background-color: #272727;
+  background-color: var(--color-bg);
   border-radius: var(--border-radius-sm);
   position: relative;
   overflow: hidden;
@@ -85,7 +85,7 @@
 .chart {
   width: 100%;
   height: 200px;
-  background-color: #272727;
+  background-color: var(--color-bg);
   border-radius: var(--border-radius-sm);
   position: relative;
   overflow: hidden;
@@ -114,7 +114,7 @@
 .legendItem {
   width: 80px;
   height: 18px;
-  background-color: #272727;
+  background-color: var(--color-bg);
   border-radius: var(--border-radius-sm);
   position: relative;
   overflow: hidden;
@@ -128,7 +128,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.027),
       transparent
     );
     animation: shimmer 1.5s infinite;
