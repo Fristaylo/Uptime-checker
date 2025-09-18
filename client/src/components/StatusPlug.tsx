@@ -15,9 +15,7 @@ const StatusPlug: React.FC<StatusPlugProps> = ({ domain }) => {
         <div key={d} className={styles.domainSection}>
           <div className={styles.domainName}></div>
           <div className={styles.requests}>
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} className={styles.requestBlock}></div>
-            ))}
+            <div className={styles.requestBlock}></div>
           </div>
         </div>
       ))}
