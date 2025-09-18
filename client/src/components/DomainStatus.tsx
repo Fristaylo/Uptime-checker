@@ -3,11 +3,14 @@ import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import useResize from '../hooks/useResize';
 import styles from './Status.module.scss';
+import { cityTranslations } from '../data/constants';
+import ReactCountryFlag from "react-country-flag";
 
 interface GroupedLog {
   created_at: string;
   total_time_avg: number;
   results: {
+    city: string;
     country: string;
     status_code: number | null;
     total_time: number | null;
@@ -64,7 +67,7 @@ const DomainStatus: React.FC<DomainStatusProps> = ({ domain, logs }) => {
                       .filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500))
                       .map((r, i) => (
                         <div key={i}>
-                          - {r.country}: {r.status_code !== null ? `Статус: ${r.status_code}` : 'Статус: N/A'}, Время: {r.total_time !== null ? `${r.total_time}ms` : 'Время: N/A'}
+                          - <ReactCountryFlag countryCode={r.country || "US"} svg style={{ marginRight: '5px' }} /> {cityTranslations[r.city || "Unknown"] || r.city}: {r.status_code !== null ? `Статус: ${r.status_code}` : 'Статус: N/A'}, Время: {r.total_time !== null ? `${r.total_time}ms` : 'Время: N/A'}
                         </div>
                       ))}
                   </div>

@@ -17,6 +17,7 @@ interface GroupedLog {
   created_at: string;
   total_time_avg: number;
   results: {
+    city: string;
     country: string;
     status_code: number | null;
     total_time: number | null;
@@ -50,8 +51,10 @@ const Status: React.FC<StatusProps> = ({ timeRange, domain }) => {
 
       let logsArray: Log[] = [];
       if (domain) {
-        logsArray = Object.values(data).flatMap((countryData: any) =>
-          Object.values(countryData).flatMap((cityData: any) => cityData)
+        logsArray = Object.entries(data).flatMap(([country, countryData]: [string, any]) =>
+          Object.entries(countryData).flatMap(([city, cityData]: [string, any]) =>
+            cityData.map((log: Log) => ({ ...log, country, city }))
+          )
         );
       } else {
         logsArray = Array.isArray(data) ? data : Object.values(data).flatMap((domainLogs: any) => Object.values(domainLogs).flat());
@@ -88,15 +91,16 @@ const Status: React.FC<StatusProps> = ({ timeRange, domain }) => {
               created_at: logs[0].created_at,
               total_time_avg,
               results: logs.map(
-                ({ country = "Unknown", status_code = null, total_time = null }) => ({
-                  country,
+                ({ city = "Unknown", country = "Unknown", status_code = null, total_time = null }) => ({
+                  city: city || "Unknown",
+                  country: country || "Unknown",
                   status_code,
                   total_time,
                 })
               ),
             };
           })
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          .sort((b, a) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       }
 
       setDomainLogs(processedDomainLogs);
