@@ -8,22 +8,6 @@
   margin-bottom: 1rem;
   position: relative;
   overflow: hidden;
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -150%;
-    width: 150%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.08),
-      transparent
-    );
-    animation: shimmer 1.5s infinite;
-  }
 }
 
 @keyframes shimmer {
@@ -43,12 +27,31 @@
   height: 24px;
   background-color: var(--color-bg);
   border-radius: var(--border-radius-sm);
+    position: relative;
+  overflow: hidden;
+
+    &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
 }
 
 .requests {
   display: flex;
   flex-direction: row-reverse;
   gap: 4px;
+  
 }
 
 .requestBlock {
@@ -58,4 +61,22 @@
   flex-grow: 1;
   flex-shrink: 0;
   flex-basis: 10px;
+    position: relative;
+  overflow: hidden;
+
+    &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
 }

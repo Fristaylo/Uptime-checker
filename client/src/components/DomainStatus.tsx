@@ -20,15 +20,19 @@ interface DomainStatusProps {
 }
 
 const getStatusColor = (log: GroupedLog) => {
-  const failedCountries = log.results.filter(
-    (r) => r.status_code !== 200 || r.total_time === null
+  const problematicCountriesCount = log.results.filter(
+    (r) => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500)
   ).length;
-  const totalTimeAvg = log.total_time_avg;
+  const totalCountries = log.results.length;
 
-  if (totalTimeAvg > 2500) {
-    if (failedCountries === log.results.length) return styles.red;
-    if (failedCountries >= 3) return styles.orange;
-    if (failedCountries >= 1) return styles.yellow;
+  if (problematicCountriesCount === totalCountries) {
+    return styles.red;
+  }
+  if (problematicCountriesCount >= 3) {
+    return styles.orange;
+  }
+  if (problematicCountriesCount >= 1 && problematicCountriesCount <= 2) {
+    return styles.yellow;
   }
   return styles.green;
 };
@@ -49,12 +53,26 @@ const DomainStatus: React.FC<DomainStatusProps> = ({ domain, logs }) => {
         {visibleLogs.map((log, index) => (
           <Tippy
             key={`${log.created_at}-${index}`}
-            content={`${new Date(
-              log.created_at
-            ).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}, Среднее время: ${log.total_time_avg.toFixed(2)}ms`}
+            content={
+              <div>
+                <div>Время: {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div>Среднее время: {log.total_time_avg.toFixed(2)}ms</div>
+                {log.results.filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500)).length > 0 ? (
+                  <div>
+                    <div>Проблемные города:</div>
+                    {log.results
+                      .filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500))
+                      .map((r, i) => (
+                        <div key={i}>
+                          - {r.country}: {r.status_code !== null ? `Статус: ${r.status_code}` : 'Статус: N/A'}, Время: {r.total_time !== null ? `${r.total_time}ms` : 'Время: N/A'}
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div>Все города в норме</div>
+                )}
+              </div>
+            }
           >
             <div
               className={`${styles.requestBlock} ${getStatusColor(log)}`}
