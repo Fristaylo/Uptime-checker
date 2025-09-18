@@ -6,6 +6,7 @@ import CountryChartPlug from "./CountryChartPlug";
 import ReactCountryFlag from "react-country-flag";
 import { countries, domains } from "../data/constants";
 import ButtonGroup from "./ButtonGroup";
+import Status from "./Status";
 
 interface Log {
   created_at: string;
@@ -186,6 +187,7 @@ const Dashboard = () => {
             />
           </div>
         </div>
+        <Status timeRange={timeRange} />
         {isStaleData && (
           <div className={styles.staleDataWarning}>
             Данные могут быть устаревшими. Обновление...
@@ -249,6 +251,7 @@ const Dashboard = () => {
           />
         </div>
       </div>
+      <Status timeRange={timeRange} domain={domain} />
       {isStaleData && (
         <div className={styles.staleDataWarning}>
           Данные могут быть устаревшими. Обновление...
