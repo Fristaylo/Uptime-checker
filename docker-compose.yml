@@ -13,6 +13,7 @@ services:
       - GLOBALPING_API_KEY2=${GLOBALPING_API_KEY2}
       - GLOBALPING_API_KEY3=${GLOBALPING_API_KEY3}
       - GLOBALPING_API_KEY4=${GLOBALPING_API_KEY4}
+    restart: always
 
   db:
     image: postgres:13
@@ -24,6 +25,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: always
 
 volumes:
   pgdata:
