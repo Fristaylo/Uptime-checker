@@ -34,7 +34,10 @@ const getStatusColor = (log: GroupedLog) => {
   if (problematicCountriesCount >= 3) {
     return styles.orange;
   }
-  if (problematicCountriesCount >= 1 && problematicCountriesCount <= 2) {
+  if (problematicCountriesCount === 1) {
+    return styles.darkGreen;
+  }
+  if (problematicCountriesCount >= 2) {
     return styles.yellow;
   }
   return styles.green;
