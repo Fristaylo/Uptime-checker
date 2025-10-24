@@ -70,7 +70,7 @@ const DomainStatus: React.FC<DomainStatusProps> = ({ domain, logs }) => {
                       .filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500))
                       .map((r, i) => (
                         <div key={i}>
-                          - <ReactCountryFlag countryCode={r.country || "US"} svg style={{ marginRight: '5px' }} /> {cityTranslations[r.city || "Unknown"] || r.city}: {r.status_code !== null ? `Статус: ${r.status_code}` : 'Статус: N/A'}, Время: {r.total_time !== null ? `${r.total_time}ms` : 'Время: N/A'}
+                          - <ReactCountryFlag countryCode={r.country || "US"} svg style={{ marginRight: '5px' }} /> {cityTranslations[r.city || "Unknown"] || r.city}: {r.status_code !== null ? `Статус: ${r.status_code}` : 'Статус: N/A'}, Время: {r.total_time !== null ? `${r.total_time}ms` : 'N/A'}
                         </div>
                       ))}
                   </div>
