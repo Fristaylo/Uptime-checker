@@ -127,7 +127,7 @@ const locationGroups = {
     { country: "UA", city: "Kyiv" },
     { country: "UA", city: "Lviv" },
     { country: "KZ", city: "Almaty" },
-    { country: "KZ", city: "Astana" },
+    
     { country: "BY", city: "Minsk" },
   ],
   "5min": [

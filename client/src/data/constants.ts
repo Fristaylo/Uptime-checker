@@ -31,7 +31,6 @@ export const cityTranslations: { [key: string]: string } = {
   Kyiv: "Киев",
   Lviv: "Львов",
   Almaty: "Алматы",
-  Astana: "Астана",
   Minsk: "Минск",
   Berlin: "Берлин",
   Dusseldorf: "Дюссельдорф",
