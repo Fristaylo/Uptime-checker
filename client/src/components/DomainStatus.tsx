@@ -24,7 +24,7 @@ interface DomainStatusProps {
 
 const getStatusColor = (log: GroupedLog) => {
   const problematicCountriesCount = log.results.filter(
-    (r) => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500)
+    (r) => r.status_code !== 200 && r.status_code !== 429 || r.total_time === null || (r.total_time && r.total_time > 2500)
   ).length;
   const totalCountries = log.results.length;
 
@@ -63,11 +63,11 @@ const DomainStatus: React.FC<DomainStatusProps> = ({ domain, logs }) => {
               <div>
                 <div>Время: {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                 <div>Среднее время: {log.total_time_avg.toFixed(2)}ms</div>
-                {log.results.filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500)).length > 0 ? (
+                {log.results.filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500) || Number(r.status_code) === 429).length > 0 ? (
                   <div>
                     <div>Проблемные города:</div>
                     {log.results
-                      .filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500))
+                      .filter(r => r.status_code !== 200 || r.total_time === null || (r.total_time && r.total_time > 2500) || Number(r.status_code) === 429)
                       .map((r, i) => (
                         <div key={i}>
                           - <ReactCountryFlag countryCode={r.country || "US"} svg style={{ marginRight: '5px' }} /> {cityTranslations[r.city || "Unknown"] || r.city}: {r.status_code !== null ? `Статус: ${r.status_code}` : 'Статус: N/A'}, Время: {r.total_time !== null ? `${r.total_time}ms` : 'N/A'}

@@ -201,6 +201,30 @@ const httpCheckAndSave = async (locations) => {
         console.error(
           `Failed to create measurement: ${createMeasurementResponse.status} ${createMeasurementResponse.statusText}. Body: ${errorBody}`
         );
+if (createMeasurementResponse.status === 429) {
+  for (const location of locations) {
+    const query = `
+      INSERT INTO http_logs (
+        probe_id, domain, country, city, asn, network, status_code, total_time, download_time, first_byte_time, dns_time, tls_time, tcp_time
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    `;
+    await pool.query(query, [
+      "api_limit",
+      target,
+      location.country,
+      location.city,
+      null,
+      null,
+      429,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
+  }
+}
         continue;
       }
 
