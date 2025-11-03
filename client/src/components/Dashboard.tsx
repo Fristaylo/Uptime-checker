@@ -173,7 +173,6 @@ const Dashboard = () => {
     return (
       <div className={styles.dashboard}>
         <div className={styles.header}>
-          <h2>Статусы доменов</h2>
           <div className={styles.controls}>
             <ButtonGroup
               options={timeRangeOptions}
@@ -237,7 +236,6 @@ const Dashboard = () => {
   return (
     <div className={styles.dashboard}>
       <div className={styles.header}>
-        <h2>Статус {domain}</h2>
         <div className={styles.controls}>
           <ButtonGroup
             options={timeRangeOptions}
