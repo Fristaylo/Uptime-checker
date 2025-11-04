@@ -7,8 +7,8 @@
 .dropdownHeader {
     background-color: var(--color-dark-bg-1);
     color: var(--color-text);
-    padding: 20px 12px;
-    border: 2px solid var(--color-secondary);
+	height: 40px;
+	border: 2px solid var(--color-secondary);
     border-radius: var(--border-radius-md);
     cursor: pointer;
     display: flex;
@@ -17,6 +17,7 @@
     width: 220px; /* Adjust as needed */
     font-size: 18px;
     transition: background-color 0.2s ease;
+	line-height: 1;
 
     &:hover {
         background-color: var(--color-dark-bg-2);
@@ -24,8 +25,11 @@
 }
 
 .arrow {
-    margin-left: 10px;
-    transition: transform 0.2s ease;
+    transition: transform 0.3s ease;
+}
+
+.arrowOpen {
+    transform: rotate(180deg);
 }
 
 .dropdownList {
@@ -34,7 +38,7 @@
     left: 0;
     background-color: var(--color-dark-bg-1);
     border-radius: var(--border-radius-md);
-	overflow: hidden;
+    overflow: hidden;
     list-style: none;
     padding: 0;
     margin: 5px 0 0 0;

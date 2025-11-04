@@ -1,21 +1,39 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./DomainDropdown.module.scss";
 import { domains } from "../data/constants";
 
 const DomainDropdown: React.FC = () => {
     const navigate = useNavigate();
-    const { domain: currentDomainParam } = useParams<{ domain: string }>();
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [currentSelection, setCurrentSelection] = useState("Все домены");
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        const currentPath = location.pathname.slice(1);
         setCurrentSelection(
-            currentDomainParam
-                ? domains.find((d) => d === currentDomainParam) || currentDomainParam
+            currentPath
+                ? domains.find((d) => d === currentPath) || currentPath
                 : "Все домены"
         );
-    }, [currentDomainParam]);
+    }, [location]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleSelect = (domain: string) => {
         if (currentSelection === domain) {
@@ -32,10 +50,30 @@ const DomainDropdown: React.FC = () => {
     };
 
     return (
-        <div className={styles.dropdownContainer}>
-            <button className={styles.dropdownHeader} onClick={() => setIsOpen(!isOpen)}>
+        <div className={styles.dropdownContainer} ref={dropdownRef}>
+            <button
+                className={styles.dropdownHeader}
+                onClick={() => setIsOpen(!isOpen)}
+            >
                 {currentSelection}
-                <span className={styles.arrow}>&#9660;</span>
+                <svg
+                    width="16"
+                    height="10"
+                    viewBox="0 0 16 10"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`${styles.arrow} ${
+                        isOpen ? styles.arrowOpen : ""
+                    }`}
+                >
+                    <path
+                        d="M1.5 1.5L8 8.5L14.5 1.5"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
             </button>
             {isOpen && (
                 <ul className={styles.dropdownList}>

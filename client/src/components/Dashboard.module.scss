@@ -143,6 +143,8 @@
     background-color: var(--color-dark-bg-1);
     padding: 10px 0;
     border-radius: var(--border-radius-md);
+	box-shadow: var(--box-shadow);
+
 
     @media (max-width: 350px) {
         column-gap: 0px;

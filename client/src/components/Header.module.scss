@@ -22,6 +22,8 @@
 .logoContainer {
     margin-right: 40px;
     text-align: center;
+    display: flex;
+    align-items: center;
 }
 
 .logo {
@@ -35,4 +37,13 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
+}
+
+.logoImg {
+    width: 44px;
+    height: 44px;
+    margin-right: 10px;
+}
+.logoLink {
+    text-decoration: none;
 }
