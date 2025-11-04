@@ -1,40 +1,40 @@
 .footer {
-  background-color: var(--color-dark-bg-1);
-  padding: 20px;
-  text-align: center;
-  border-top: 1px solid var(--color-medium-gray);
+    background-color: var(--color-dark-bg-1);
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid var(--color-medium-gray);
 
-  position: relative;
-  bottom: 0;
-  margin-top: 75px;
-  width: 100%;
-  left: 0;
-  right: 0;
-  box-sizing: border-box;
-  z-index: 1000;
+    position: relative;
+    bottom: 0;
+    margin-top: 75px;
+    width: 100%;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+    z-index: 1000;
 
-  .links {
-    margin-bottom: 10px;
-    display: flex;
-    row-gap: 5px;
-    column-gap: 10px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
+    .links {
+        margin-bottom: 10px;
+        display: flex;
+        row-gap: 5px;
+        column-gap: 10px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
 
-    a {
-      color: var(--color-primary);
-      text-decoration: none;
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
 
-      &:hover {
-        text-decoration: underline;
-      }
+            &:hover {
+                text-decoration: underline;
+            }
+        }
     }
-  }
 
-  .text {
-    font-size: 16px;
-    font-weight: 500;
-  }
+    .text {
+        font-size: 16px;
+        font-weight: 500;
+    }
 }

@@ -1,7 +1,7 @@
-
-
 .chartLoading {
-  filter: grayscale(1);
-  opacity: 0.5;
-  transition: filter 0.3s ease, opacity 0.3s ease;
+    filter: grayscale(1);
+    opacity: 0.5;
+    transition:
+        filter 0.3s ease,
+        opacity 0.3s ease;
 }

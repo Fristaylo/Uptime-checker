@@ -9,336 +9,435 @@ import ButtonGroup from "./ButtonGroup";
 import Status from "./Status";
 
 interface Log {
-  created_at: string;
-  domain?: string;
-  country?: string;
-  city?: string;
-  status_code?: number;
-  total_time?: number;
-  download_time?: number;
-  first_byte_time?: number;
-  dns_time?: number;
-  tls_time?: number;
-  tcp_time?: number;
+    created_at: string;
+    domain?: string;
+    country?: string;
+    city?: string;
+    status_code?: number;
+    total_time?: number;
+    download_time?: number;
+    first_byte_time?: number;
+    dns_time?: number;
+    tls_time?: number;
+    tcp_time?: number;
 }
 
 interface CityLogs {
-  [city: string]: Log[];
+    [city: string]: Log[];
 }
 
 interface CountryLogs {
-  [country: string]: CityLogs;
+    [country: string]: CityLogs;
 }
 
 interface Location {
-  country: string;
-  city: string;
+    country: string;
+    city: string;
 }
 
 interface LocationGroups {
-  [interval: string]: Location[];
+    [interval: string]: Location[];
 }
 
 const Dashboard = () => {
-  const allowedCountries = ["RU", "UA", "KZ", "BY"];
-  const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
-  const [locationGroups, setLocationGroups] = useState<LocationGroups>({});
-  const [domainLogs, setDomainLogs] = useState<{ [domain: string]: CityLogs }>(
-    {}
-  );
-  const [loading, setLoading] = useState(true);
-  const [isChartLoading, setChartLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isStaleData, setIsStaleData] = useState(false);
-  const [timeRange, setTimeRange] = useState(
-    () => localStorage.getItem("timeRange") || "week"
-  );
-  const [aggregationType, setAggregationType] = useState(
-    () => localStorage.getItem("aggregationType") || "hour"
-  );
-  const { domain } = useParams<{ domain: string }>();
-
-  const timeRangeOptions = [
-    { value: "month", label: "Месяц" },
-    { value: "week", label: "Неделя" },
-    { value: "day", label: "День" },
-    { value: "hour", label: "Час" },
-  ];
-
-  const aggregationTypeOptions = [
-    { value: "standard", label: "По стандарту" },
-    { value: "hour", label: "По часам" },
-  ];
-
-  const fetchData = async () => {
-    try {
-      if (domain) {
-        const [logsResponse, locationsResponse] = await Promise.all([
-          fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
-          fetch("/locations"),
-        ]);
-
-        if (!logsResponse.ok) {
-          throw new Error(`HTTP error! status: ${logsResponse.status}`);
-        }
-        if (!locationsResponse.ok) {
-          throw new Error(`HTTP error! status: ${locationsResponse.status}`);
-        }
-
-        const logsData: CountryLogs = await logsResponse.json();
-        const locationsData: LocationGroups = await locationsResponse.json();
-
-        setHttpLogs(logsData);
-        setLocationGroups(locationsData);
-      } else {
-        const response = await fetch(`/http-logs?timeRange=${timeRange}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: Log[] = await response.json();
-        const filteredData = data.filter(
-          (log) => log.country && allowedCountries.includes(log.country)
-        );
-
-        const groupedByDomain = filteredData.reduce((acc, log) => {
-          if (log.domain && log.city) {
-            const domain = log.domain;
-            const city = log.city;
-            if (!acc[domain]) {
-              acc[domain] = {};
-            }
-            if (!acc[domain][city]) {
-              acc[domain][city] = [];
-            }
-            acc[domain][city].push(log);
-          }
-          return acc;
-        }, {} as { [domain: string]: CityLogs });
-        setDomainLogs(groupedByDomain);
-      }
-      setIsStaleData(false); // Данные успешно получены, сбрасываем флаг устаревших данных
-    } catch (e: any) {
-      if (Object.keys(httpLogs).length > 0 || Object.keys(domainLogs).length > 0) {
-        setIsStaleData(true); // Есть старые данные, показываем их и устанавливаем флаг
-        console.warn("Failed to fetch new data, displaying stale data:", e.message);
-      } else {
-        setError(e.message); // Нет старых данных, показываем ошибку
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [domain]);
-
-  useEffect(() => {
-    setChartLoading(true);
-    fetchData().finally(() => setChartLoading(false));
-  }, [timeRange]);
-
-  useEffect(() => {
-    const intervalId = setInterval(fetchData, 30000);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchData(); // Принудительно обновляем данные при возвращении на вкладку
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [domain, timeRange]);
-  useEffect(() => {
-    if (timeRange === "week" || timeRange === "month") {
-      setAggregationType("hour");
-    } else {
-      setAggregationType("standard");
-    }
-  }, [timeRange]);
-
-  useEffect(() => {
-    localStorage.setItem("timeRange", timeRange);
-    localStorage.setItem("aggregationType", aggregationType);
-  }, [timeRange, aggregationType]);
-
-  if (error) return <div>Error: {error}</div>;
-
-  if (!domain) {
-    return (
-      <div className={styles.dashboard}>
-        <div className={styles.header}>
-          <div className={styles.controls}>
-            <ButtonGroup
-              options={timeRangeOptions}
-              value={timeRange}
-              onChange={setTimeRange}
-            />
-            <ButtonGroup
-              options={aggregationTypeOptions}
-              value={aggregationType}
-              onChange={setAggregationType}
-            />
-          </div>
-        </div>
-        <Status timeRange={timeRange} />
-        {isStaleData && (
-          <div className={styles.staleDataWarning}>
-            Данные могут быть устаревшими. Обновление...
-          </div>
-        )}
-        <div className={styles.chartsGrid}>
-          {loading
-            ? Array.from({ length: domains.length }).map((_, index) => (
-                <CountryChartPlug key={index} />
-              ))
-            : Object.entries(domainLogs)
-                .sort(([domainA], [domainB]) => {
-                  const domainOrder = [
-                    "site.yummyani.me",
-                    "site.yummy-ani.me",
-                    "ru.yummyani.me",
-                    "en.yummyani.me",
-                  ];
-                  return (
-                    domainOrder.indexOf(domainA) - domainOrder.indexOf(domainB)
-                  );
-                })
-                .map(([domain, cityLogs]) => (
-                  <div key={domain} className={styles.countryChart}>
-                    <div className={styles.countryHeader}>
-                      <p className={styles.countryName}>{domain}</p>
-                      <NavLink to={`${domain}`}>
-                        <button>Подробнее</button>
-                      </NavLink>
-                    </div>
-                    <div className={styles.chartContainer}>
-                      <CountryChart
-                        cityLogs={cityLogs}
-                        cities={Object.keys(cityLogs)}
-                        timeRange={timeRange}
-                        aggregationType={aggregationType}
-                        isChartLoading={isChartLoading}
-                      />
-                    </div>
-                  </div>
-                ))}
-        </div>
-      </div>
+    const allowedCountries = ["RU", "UA", "KZ", "BY"];
+    const [httpLogs, setHttpLogs] = useState<CountryLogs>({});
+    const [locationGroups, setLocationGroups] = useState<LocationGroups>({});
+    const [domainLogs, setDomainLogs] = useState<{
+        [domain: string]: CityLogs;
+    }>({});
+    const [loading, setLoading] = useState(true);
+    const [isChartLoading, setChartLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [isStaleData, setIsStaleData] = useState(false);
+    const [timeRange, setTimeRange] = useState(
+        () => localStorage.getItem("timeRange") || "week"
     );
-  }
+    const [aggregationType, setAggregationType] = useState(
+        () => localStorage.getItem("aggregationType") || "hour"
+    );
+    const { domain } = useParams<{ domain: string }>();
 
-  return (
-    <div className={styles.dashboard}>
-      <div className={styles.header}>
-        <div className={styles.controls}>
-          <ButtonGroup
-            options={timeRangeOptions}
-            value={timeRange}
-            onChange={setTimeRange}
-          />
-          <ButtonGroup
-            options={aggregationTypeOptions}
-            value={aggregationType}
-            onChange={setAggregationType}
-          />
-        </div>
-      </div>
-      <Status timeRange={timeRange} domain={domain} />
-      {isStaleData && (
-        <div className={styles.staleDataWarning}>
-          Данные могут быть устаревшими. Обновление...
-        </div>
-      )}
-      {loading ? (
-		<div className={styles.chartsGrid}>
-			{Array.from({ length: 4 }).map((_, index) => (
-				<CountryChartPlug key={index} />
-			))}
-			{Array.from({ length: 3 }).map((_, index) => (
-				<CountryChartPlug key={index} />
-			))}
-			{Array.from({ length: 10 }).map((_, index) => (
-				<CountryChartPlug key={index} />
-			))}
-		</div>
-      ) : (
-        Object.entries(locationGroups).map(([interval, locations]) => {
-          const intervalMinutes = parseInt(interval.replace("min", ""));
-          return (
-            <div key={interval} className={styles.chartGroup}>
-              <div className={styles.chartsGrid}>
-                {locations
-                  .reduce((acc, { country, city }) => {
-                    let countryGroup = acc.find((g) => g.countryCode === country);
-                    if (!countryGroup) {
-                      countryGroup = { countryCode: country, cities: [] };
-                      acc.push(countryGroup);
-                    }
-                    countryGroup.cities.push(city);
-                    return acc;
-                  }, [] as { countryCode: string; cities: string[] }[])
-                  .sort(
-                    (a, b) =>
-                      countries.findIndex((c) => c.code === a.countryCode) -
-                      countries.findIndex((c) => c.code === b.countryCode)
-                  )
-                  .map(({ countryCode, cities }) => {
-                    const country = countries.find((c) => c.code === countryCode);
-                    const countryName = country ? country.name : countryCode;
-                    const cityLogsForCountry = httpLogs[countryCode] || {};
+    const timeRangeOptions = [
+        { value: "month", label: "Месяц" },
+        { value: "week", label: "Неделя" },
+        { value: "day", label: "День" },
+        { value: "hour", label: "Час" },
+    ];
 
-                  return (
-                    <div key={countryCode} className={styles.countryChart}>
-                      <div className={styles.countryHeader}>
-                        <div className={styles.countryIdentifier}>
-                          <ReactCountryFlag
-                            countryCode={countryCode}
-                            svg
-                            style={{
-                              width: "24px",
-                              height: "16px",
-                              borderRadius: "5px",
-                            }}
-                            title={countryName}
-                          />
-                          <p className={styles.countryName}>{countryName}</p>
-                        </div>
-                        <div className={styles.checkInterval} title={`Каждая проверка происходит раз в ${intervalMinutes} минут`}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                          <span>{intervalMinutes}м</span>
-                        </div>
-                      </div>
-                      <div className={styles.chartContainer}>
-                        <CountryChart
-                          cityLogs={cityLogsForCountry}
-                          cities={cities}
-                          timeRange={timeRange}
-                          aggregationType={aggregationType}
-                          isChartLoading={isChartLoading}
+    const aggregationTypeOptions = [
+        { value: "standard", label: "По стандарту" },
+        { value: "hour", label: "По часам" },
+    ];
+
+    const fetchData = async () => {
+        try {
+            if (domain) {
+                const [logsResponse, locationsResponse] = await Promise.all([
+                    fetch(`/http-logs?timeRange=${timeRange}&domain=${domain}`),
+                    fetch("/locations"),
+                ]);
+
+                if (!logsResponse.ok) {
+                    throw new Error(
+                        `HTTP error! status: ${logsResponse.status}`
+                    );
+                }
+                if (!locationsResponse.ok) {
+                    throw new Error(
+                        `HTTP error! status: ${locationsResponse.status}`
+                    );
+                }
+
+                const logsData: CountryLogs = await logsResponse.json();
+                const locationsData: LocationGroups =
+                    await locationsResponse.json();
+
+                setHttpLogs(logsData);
+                setLocationGroups(locationsData);
+            } else {
+                const response = await fetch(
+                    `/http-logs?timeRange=${timeRange}`
+                );
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data: Log[] = await response.json();
+                const filteredData = data.filter(
+                    (log) =>
+                        log.country && allowedCountries.includes(log.country)
+                );
+
+                const groupedByDomain = filteredData.reduce(
+                    (acc, log) => {
+                        if (log.domain && log.city) {
+                            const domain = log.domain;
+                            const city = log.city;
+                            if (!acc[domain]) {
+                                acc[domain] = {};
+                            }
+                            if (!acc[domain][city]) {
+                                acc[domain][city] = [];
+                            }
+                            acc[domain][city].push(log);
+                        }
+                        return acc;
+                    },
+                    {} as { [domain: string]: CityLogs }
+                );
+                setDomainLogs(groupedByDomain);
+            }
+            setIsStaleData(false); // Данные успешно получены, сбрасываем флаг устаревших данных
+        } catch (e: any) {
+            if (
+                Object.keys(httpLogs).length > 0 ||
+                Object.keys(domainLogs).length > 0
+            ) {
+                setIsStaleData(true); // Есть старые данные, показываем их и устанавливаем флаг
+                console.warn(
+                    "Failed to fetch new data, displaying stale data:",
+                    e.message
+                );
+            } else {
+                setError(e.message); // Нет старых данных, показываем ошибку
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+    useEffect(() => {
+        setLoading(true);
+        fetchData();
+    }, [domain]);
+
+    useEffect(() => {
+        setChartLoading(true);
+        fetchData().finally(() => setChartLoading(false));
+    }, [timeRange]);
+
+    useEffect(() => {
+        const intervalId = setInterval(fetchData, 30000);
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                fetchData(); // Принудительно обновляем данные при возвращении на вкладку
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            clearInterval(intervalId);
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange
+            );
+        };
+    }, [domain, timeRange]);
+    useEffect(() => {
+        if (timeRange === "week" || timeRange === "month") {
+            setAggregationType("hour");
+        } else {
+            setAggregationType("standard");
+        }
+    }, [timeRange]);
+
+    useEffect(() => {
+        localStorage.setItem("timeRange", timeRange);
+        localStorage.setItem("aggregationType", aggregationType);
+    }, [timeRange, aggregationType]);
+
+    if (error) return <div>Error: {error}</div>;
+
+    if (!domain) {
+        return (
+            <div className={styles.dashboard}>
+                <div className={styles.header}>
+                    <div className={styles.controls}>
+                        <ButtonGroup
+                            options={timeRangeOptions}
+                            value={timeRange}
+                            onChange={setTimeRange}
                         />
-                      </div>
+                        <ButtonGroup
+                            options={aggregationTypeOptions}
+                            value={aggregationType}
+                            onChange={setAggregationType}
+                        />
                     </div>
-                  );
-                })}
-              </div>
-              {Object.keys(locationGroups).indexOf(interval) < Object.keys(locationGroups).length - 1 && (
-                <hr className={styles.chartDivider} />
-              )}
+                </div>
+                <Status timeRange={timeRange} />
+                {isStaleData && (
+                    <div className={styles.staleDataWarning}>
+                        Данные могут быть устаревшими. Обновление...
+                    </div>
+                )}
+                <div className={styles.chartsGrid}>
+                    {loading
+                        ? Array.from({ length: domains.length }).map(
+                              (_, index) => <CountryChartPlug key={index} />
+                          )
+                        : Object.entries(domainLogs)
+                              .sort(([domainA], [domainB]) => {
+                                  const domainOrder = [
+                                      "site.yummyani.me",
+                                      "site.yummy-ani.me",
+                                      "ru.yummyani.me",
+                                      "en.yummyani.me",
+                                  ];
+                                  return (
+                                      domainOrder.indexOf(domainA) -
+                                      domainOrder.indexOf(domainB)
+                                  );
+                              })
+                              .map(([domain, cityLogs]) => (
+                                  <div
+                                      key={domain}
+                                      className={styles.countryChart}
+                                  >
+                                      <div className={styles.countryHeader}>
+                                          <p className={styles.countryName}>
+                                              {domain}
+                                          </p>
+                                          <NavLink to={`${domain}`}>
+                                              <button>Подробнее</button>
+                                          </NavLink>
+                                      </div>
+                                      <div className={styles.chartContainer}>
+                                          <CountryChart
+                                              cityLogs={cityLogs}
+                                              cities={Object.keys(cityLogs)}
+                                              timeRange={timeRange}
+                                              aggregationType={aggregationType}
+                                              isChartLoading={isChartLoading}
+                                          />
+                                      </div>
+                                  </div>
+                              ))}
+                </div>
             </div>
-          );
-        })
-      )}
-    </div>
-  );
+        );
+    }
+
+    return (
+        <div className={styles.dashboard}>
+            <div className={styles.header}>
+                <div className={styles.controls}>
+                    <ButtonGroup
+                        options={timeRangeOptions}
+                        value={timeRange}
+                        onChange={setTimeRange}
+                    />
+                    <ButtonGroup
+                        options={aggregationTypeOptions}
+                        value={aggregationType}
+                        onChange={setAggregationType}
+                    />
+                </div>
+            </div>
+            <Status timeRange={timeRange} domain={domain} />
+            {isStaleData && (
+                <div className={styles.staleDataWarning}>
+                    Данные могут быть устаревшими. Обновление...
+                </div>
+            )}
+            {loading ? (
+                <div className={styles.chartsGrid}>
+                    {Array.from({ length: 4 }).map((_, index) => (
+                        <CountryChartPlug key={index} />
+                    ))}
+                    {Array.from({ length: 3 }).map((_, index) => (
+                        <CountryChartPlug key={index} />
+                    ))}
+                    {Array.from({ length: 10 }).map((_, index) => (
+                        <CountryChartPlug key={index} />
+                    ))}
+                </div>
+            ) : (
+                Object.entries(locationGroups).map(([interval, locations]) => {
+                    const intervalMinutes = parseInt(
+                        interval.replace("min", "")
+                    );
+                    return (
+                        <div key={interval} className={styles.chartGroup}>
+                            <div className={styles.chartsGrid}>
+                                {locations
+                                    .reduce(
+                                        (acc, { country, city }) => {
+                                            let countryGroup = acc.find(
+                                                (g) => g.countryCode === country
+                                            );
+                                            if (!countryGroup) {
+                                                countryGroup = {
+                                                    countryCode: country,
+                                                    cities: [],
+                                                };
+                                                acc.push(countryGroup);
+                                            }
+                                            countryGroup.cities.push(city);
+                                            return acc;
+                                        },
+                                        [] as {
+                                            countryCode: string;
+                                            cities: string[];
+                                        }[]
+                                    )
+                                    .sort(
+                                        (a, b) =>
+                                            countries.findIndex(
+                                                (c) => c.code === a.countryCode
+                                            ) -
+                                            countries.findIndex(
+                                                (c) => c.code === b.countryCode
+                                            )
+                                    )
+                                    .map(({ countryCode, cities }) => {
+                                        const country = countries.find(
+                                            (c) => c.code === countryCode
+                                        );
+                                        const countryName = country
+                                            ? country.name
+                                            : countryCode;
+                                        const cityLogsForCountry =
+                                            httpLogs[countryCode] || {};
+
+                                        return (
+                                            <div
+                                                key={countryCode}
+                                                className={styles.countryChart}
+                                            >
+                                                <div
+                                                    className={
+                                                        styles.countryHeader
+                                                    }
+                                                >
+                                                    <div
+                                                        className={
+                                                            styles.countryIdentifier
+                                                        }
+                                                    >
+                                                        <ReactCountryFlag
+                                                            countryCode={
+                                                                countryCode
+                                                            }
+                                                            svg
+                                                            style={{
+                                                                width: "24px",
+                                                                height: "16px",
+                                                                borderRadius:
+                                                                    "5px",
+                                                            }}
+                                                            title={countryName}
+                                                        />
+                                                        <p
+                                                            className={
+                                                                styles.countryName
+                                                            }
+                                                        >
+                                                            {countryName}
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        className={
+                                                            styles.checkInterval
+                                                        }
+                                                        title={`Каждая проверка происходит раз в ${intervalMinutes} минут`}
+                                                    >
+                                                        <svg
+                                                            width="16"
+                                                            height="16"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        >
+                                                            <circle
+                                                                cx="12"
+                                                                cy="12"
+                                                                r="10"
+                                                            ></circle>
+                                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                                        </svg>
+                                                        <span>
+                                                            {intervalMinutes}м
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    className={
+                                                        styles.chartContainer
+                                                    }
+                                                >
+                                                    <CountryChart
+                                                        cityLogs={
+                                                            cityLogsForCountry
+                                                        }
+                                                        cities={cities}
+                                                        timeRange={timeRange}
+                                                        aggregationType={
+                                                            aggregationType
+                                                        }
+                                                        isChartLoading={
+                                                            isChartLoading
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                            {Object.keys(locationGroups).indexOf(interval) <
+                                Object.keys(locationGroups).length - 1 && (
+                                <hr className={styles.chartDivider} />
+                            )}
+                        </div>
+                    );
+                })
+            )}
+        </div>
+    );
 };
 
 export default Dashboard;

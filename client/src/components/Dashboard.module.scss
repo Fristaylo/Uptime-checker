@@ -1,173 +1,173 @@
 .dashboard {
-  padding: 15px;
-
-  h2 {
-    margin-top: 0;
-    margin: 10px 0 15px 0;
-    text-align: center;
-  }
-
-  h3 {
-    margin: 15px 0 10px 0;
-    text-align: center;
-  }
-
-  @media (max-width: 950px) {
-    padding: 5px;
+    padding: 15px;
 
     h2 {
-      margin: 5px 0 10px 0;
+        margin-top: 0;
+        margin: 10px 0 15px 0;
+        text-align: center;
     }
 
     h3 {
-      margin: 10px 0 5px 0;
+        margin: 15px 0 10px 0;
+        text-align: center;
     }
-  }
+
+    @media (max-width: 950px) {
+        padding: 5px;
+
+        h2 {
+            margin: 5px 0 10px 0;
+        }
+
+        h3 {
+            margin: 10px 0 5px 0;
+        }
+    }
 }
 
 .chartsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
 
-  @media (max-width: 950px) {
-    grid-template-columns: 1fr;
-    gap: 5px;
-  }
+    @media (max-width: 950px) {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
 }
 
 .countryChart {
-  box-shadow: var(--box-shadow);
-  background-color: var(--color-dark-bg-1);
-  padding: 15px;
-  border-radius: var(--border-radius-md);
-  display: flex;
-  height: 300px;
-  flex-direction: column;
-  min-width: 0;
+    box-shadow: var(--box-shadow);
+    background-color: var(--color-dark-bg-1);
+    padding: 15px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    height: 300px;
+    flex-direction: column;
+    min-width: 0;
 
-  @media (max-width: 500px) {
-    padding: 10px;
-  }
+    @media (max-width: 500px) {
+        padding: 10px;
+    }
 }
 
 .chartContainer {
-  flex-grow: 1;
-  position: relative;
+    flex-grow: 1;
+    position: relative;
 }
 
 .countryHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
 .countryIdentifier {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
 }
 
 .countryHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
 .countryName {
-  margin-left: 10px;
-  font-size: 20px;
+    margin-left: 10px;
+    font-size: 20px;
 }
 
 .checkInterval {
-  display: flex;
-  align-items: center;
-  margin-left: 10px;
-  color: var(--color-text-secondary);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: help;
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: help;
 
-  svg {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-  }
+    svg {
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+    }
 }
 
 .countryRow {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .countryName {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 .pingSquares {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
 .pingSquare {
-  width: 15px;
-  height: 15px;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
+    width: 15px;
+    height: 15px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
 }
 
 .green {
-  background-color: var(--color-green);
+    background-color: var(--color-green);
 }
 
 .yellow {
-  background-color: var(--color-yellow);
+    background-color: var(--color-yellow);
 }
 
 .red {
-  background-color: var(--color-red);
+    background-color: var(--color-red);
 }
 
 .controls {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-  row-gap: 15px;
-  column-gap: 30px;
-  justify-content: center;
-  background-color: var(--color-dark-bg-1);
-  padding: 10px 0;
-  border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    row-gap: 15px;
+    column-gap: 30px;
+    justify-content: center;
+    background-color: var(--color-dark-bg-1);
+    padding: 10px 0;
+    border-radius: var(--border-radius-md);
 
-  @media (max-width: 350px) {
-    column-gap: 0px;
-  }
+    @media (max-width: 350px) {
+        column-gap: 0px;
+    }
 }
 
 .countryChartLink {
-  text-decoration: none;
-  color: inherit;
+    text-decoration: none;
+    color: inherit;
 }
 .staleDataWarning {
-  background-color: var(--color-yellow);
-  color: #333;
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center;
-  margin-bottom: 15px;
-  font-weight: bold;
+    background-color: var(--color-yellow);
+    color: #333;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
 }
 
 .chartDivider {
-  border: none;
-  height: 5px;
-  background-color: var(--color-dark-bg-1);
-  border-radius: var(--border-radius-sm);
-  margin: 20px auto;
-  width: 95%;
+    border: none;
+    height: 5px;
+    background-color: var(--color-dark-bg-1);
+    border-radius: var(--border-radius-sm);
+    margin: 20px auto;
+    width: 95%;
 }

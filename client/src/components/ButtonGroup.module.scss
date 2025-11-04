@@ -1,15 +1,13 @@
-
-
 .buttonGroup {
-  box-shadow: var(--box-shadow);
-  display: flex;
-  gap: 10px;
+    box-shadow: var(--box-shadow);
+    display: flex;
+    gap: 10px;
 }
 
 .active {
-  background-color: var(--color-primary);
-
-  &:hover {
     background-color: var(--color-primary);
-  }
+
+    &:hover {
+        background-color: var(--color-primary);
+    }
 }
