@@ -21,7 +21,6 @@ const Header: React.FC = () => {
                   location.pathname === '/' ? styles.active : ''
                 }`}
               >
-                <span className={styles.icon}>🏠</span>
                 <span className={styles.text}>Главная</span>
               </Link>
             </li>
@@ -33,7 +32,6 @@ const Header: React.FC = () => {
                     location.pathname === `/${domain}` ? styles.active : ''
                   }`}
                 >
-                  <span className={styles.icon}>📁</span>
                   <span className={styles.text}>{domain}</span>
                 </Link>
               </li>
