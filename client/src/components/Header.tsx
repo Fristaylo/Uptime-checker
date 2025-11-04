@@ -1,11 +1,8 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
 import styles from "./Header.module.scss";
-import { domains } from "../data/constants";
+import DomainDropdown from "./DomainDropdown";
 
 const Header: React.FC = () => {
-    const location = useLocation();
-
     return (
         <div className={styles.headerContainer}>
             <div className={styles.header}>
@@ -13,36 +10,7 @@ const Header: React.FC = () => {
                     <span className={styles.logo}>YummyUptime</span>
                 </div>
                 <nav className={styles.nav}>
-                    <ul className={styles.navList}>
-                        <li>
-                            <Link
-                                to="/"
-                                className={`${styles.navLink} ${
-                                    location.pathname === "/"
-                                        ? styles.active
-                                        : ""
-                                }`}
-                            >
-                                <span className={styles.text}>Главная</span>
-                            </Link>
-                        </li>
-                        {domains.map((domain, index) => (
-                            <li key={index}>
-                                <Link
-                                    to={`/${domain}`}
-                                    className={`${styles.navLink} ${
-                                        location.pathname === `/${domain}`
-                                            ? styles.active
-                                            : ""
-                                    }`}
-                                >
-                                    <span className={styles.text}>
-                                        {domain}
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                    <DomainDropdown />
                 </nav>
             </div>
         </div>
