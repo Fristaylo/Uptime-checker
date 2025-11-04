@@ -14,7 +14,7 @@ const Header: React.FC = () => {
         </div>
         <nav className={styles.nav}>
           <ul className={styles.navList}>
-            <li className={styles.navItem}>
+            <li>
               <Link
                 to="/"
                 className={`${styles.navLink} ${
@@ -25,7 +25,7 @@ const Header: React.FC = () => {
               </Link>
             </li>
             {domains.map((domain, index) => (
-              <li className={styles.navItem} key={index}>
+              <li key={index}>
                 <Link
                   to={`/${domain}`}
                   className={`${styles.navLink} ${

@@ -256,58 +256,42 @@ const Dashboard = () => {
         </div>
       )}
       {loading ? (
-        <div>
-          <div>
-            <h3>Локации проверяются раз в 2 мин.</h3>
-            <div className={styles.chartsGrid}>
-              {Array.from({ length: 4 }).map((_, index) => (
-                <CountryChartPlug key={index} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3>Локации проверяются раз в 5 мин.</h3>
-            <div className={styles.chartsGrid}>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <CountryChartPlug key={index} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3>Локации проверяются раз в 6 мин.</h3>
-            <div className={styles.chartsGrid}>
-              {Array.from({ length: 10 }).map((_, index) => (
-                <CountryChartPlug key={index} />
-              ))}
-            </div>
-          </div>
-        </div>
+		<div className={styles.chartsGrid}>
+			{Array.from({ length: 4 }).map((_, index) => (
+				<CountryChartPlug key={index} />
+			))}
+			{Array.from({ length: 3 }).map((_, index) => (
+				<CountryChartPlug key={index} />
+			))}
+			{Array.from({ length: 10 }).map((_, index) => (
+				<CountryChartPlug key={index} />
+			))}
+		</div>
       ) : (
-        Object.entries(locationGroups).map(([interval, locations]) => (
-          <div key={interval}>
-            <h3>
-              Локации проверяются раз в {interval.replace("min", " мин.")}
-            </h3>
-            <div className={styles.chartsGrid}>
-              {locations
-                .reduce((acc, { country, city }) => {
-                  let countryGroup = acc.find((g) => g.countryCode === country);
-                  if (!countryGroup) {
-                    countryGroup = { countryCode: country, cities: [] };
-                    acc.push(countryGroup);
-                  }
-                  countryGroup.cities.push(city);
-                  return acc;
-                }, [] as { countryCode: string; cities: string[] }[])
-                .sort(
-                  (a, b) =>
-                    countries.findIndex((c) => c.code === a.countryCode) -
-                    countries.findIndex((c) => c.code === b.countryCode)
-                )
-                .map(({ countryCode, cities }) => {
-                  const country = countries.find((c) => c.code === countryCode);
-                  const countryName = country ? country.name : countryCode;
-                  const cityLogsForCountry = httpLogs[countryCode] || {};
+        Object.entries(locationGroups).map(([interval, locations]) => {
+          const intervalMinutes = parseInt(interval.replace("min", ""));
+          return (
+            <div key={interval} className={styles.chartGroup}>
+              <div className={styles.chartsGrid}>
+                {locations
+                  .reduce((acc, { country, city }) => {
+                    let countryGroup = acc.find((g) => g.countryCode === country);
+                    if (!countryGroup) {
+                      countryGroup = { countryCode: country, cities: [] };
+                      acc.push(countryGroup);
+                    }
+                    countryGroup.cities.push(city);
+                    return acc;
+                  }, [] as { countryCode: string; cities: string[] }[])
+                  .sort(
+                    (a, b) =>
+                      countries.findIndex((c) => c.code === a.countryCode) -
+                      countries.findIndex((c) => c.code === b.countryCode)
+                  )
+                  .map(({ countryCode, cities }) => {
+                    const country = countries.find((c) => c.code === countryCode);
+                    const countryName = country ? country.name : countryCode;
+                    const cityLogsForCountry = httpLogs[countryCode] || {};
 
                   return (
                     <div key={countryCode} className={styles.countryChart}>
@@ -325,6 +309,13 @@ const Dashboard = () => {
                           />
                           <p className={styles.countryName}>{countryName}</p>
                         </div>
+                        <div className={styles.checkInterval} title={`Каждая проверка происходит раз в ${intervalMinutes} минут`}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          <span>{intervalMinutes}м</span>
+                        </div>
                       </div>
                       <div className={styles.chartContainer}>
                         <CountryChart
@@ -338,9 +329,13 @@ const Dashboard = () => {
                     </div>
                   );
                 })}
+              </div>
+              {Object.keys(locationGroups).indexOf(interval) < Object.keys(locationGroups).length - 1 && (
+                <hr className={styles.chartDivider} />
+              )}
             </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );
