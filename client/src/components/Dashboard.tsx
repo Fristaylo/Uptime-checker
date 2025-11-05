@@ -7,6 +7,7 @@ import ReactCountryFlag from "react-country-flag";
 import { countries, domains } from "../data/constants";
 import ButtonGroup from "./ButtonGroup";
 import Status from "./Status";
+import { useDataStatus } from "../context/DataStatusContext";
 
 interface Log {
     created_at: string;
@@ -48,8 +49,7 @@ const Dashboard = () => {
     }>({});
     const [loading, setLoading] = useState(true);
     const [isChartLoading, setChartLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isStaleData, setIsStaleData] = useState(false);
+    const { setStatus } = useDataStatus();
     const [timeRange, setTimeRange] = useState(
         () => localStorage.getItem("timeRange") || "week"
     );
@@ -92,7 +92,6 @@ const Dashboard = () => {
                 const logsData: CountryLogs = await logsResponse.json();
                 const locationsData: LocationGroups =
                     await locationsResponse.json();
-
                 setHttpLogs(logsData);
                 setLocationGroups(locationsData);
             } else {
@@ -127,19 +126,15 @@ const Dashboard = () => {
                 );
                 setDomainLogs(groupedByDomain);
             }
-            setIsStaleData(false); // Данные успешно получены, сбрасываем флаг устаревших данных
+            setStatus("dashboard", "success");
         } catch (e: any) {
             if (
                 Object.keys(httpLogs).length > 0 ||
                 Object.keys(domainLogs).length > 0
             ) {
-                setIsStaleData(true); // Есть старые данные, показываем их и устанавливаем флаг
-                console.warn(
-                    "Failed to fetch new data, displaying stale data:",
-                    e.message
-                );
+                setStatus("dashboard", "stale");
             } else {
-                setError(e.message); // Нет старых данных, показываем ошибку
+                setStatus("dashboard", "error");
             }
         } finally {
             setLoading(false);
@@ -147,6 +142,7 @@ const Dashboard = () => {
     };
     useEffect(() => {
         setLoading(true);
+        setStatus("dashboard", "loading");
         fetchData();
     }, [domain]);
 
@@ -187,8 +183,6 @@ const Dashboard = () => {
         localStorage.setItem("aggregationType", aggregationType);
     }, [timeRange, aggregationType]);
 
-    if (error) return <div>Error: {error}</div>;
-
     if (!domain) {
         return (
             <div className={styles.dashboard}>
@@ -207,11 +201,6 @@ const Dashboard = () => {
                     </div>
                 </div>
                 <Status timeRange={timeRange} />
-                {isStaleData && (
-                    <div className={styles.staleDataWarning}>
-                        Данные могут быть устаревшими. Обновление...
-                    </div>
-                )}
                 <div className={styles.chartsGrid}>
                     {loading
                         ? Array.from({ length: domains.length }).map(
@@ -276,11 +265,6 @@ const Dashboard = () => {
                 </div>
             </div>
             <Status timeRange={timeRange} domain={domain} />
-            {isStaleData && (
-                <div className={styles.staleDataWarning}>
-                    Данные могут быть устаревшими. Обновление...
-                </div>
-            )}
             {loading ? (
                 <div className={styles.chartsGrid}>
                     {Array.from({ length: 4 }).map((_, index) => (

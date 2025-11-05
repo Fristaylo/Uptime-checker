@@ -3,6 +3,7 @@ import { domains } from "../data/constants";
 import DomainStatus from "./DomainStatus";
 import StatusPlug from "./StatusPlug";
 import styles from "./Status.module.scss";
+import { useDataStatus } from "../context/DataStatusContext";
 
 interface Log {
     created_at: string;
@@ -36,7 +37,7 @@ interface StatusProps {
 const Status: React.FC<StatusProps> = ({ timeRange, domain }) => {
     const [domainLogs, setDomainLogs] = useState<DomainLogs>({});
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { setStatus } = useDataStatus();
 
     const fetchData = async () => {
         try {
@@ -131,8 +132,13 @@ const Status: React.FC<StatusProps> = ({ timeRange, domain }) => {
             }
 
             setDomainLogs(processedDomainLogs);
+            setStatus("status", "success");
         } catch (e: any) {
-            setError(e.message);
+            if (Object.keys(domainLogs).length > 0) {
+                setStatus("status", "stale");
+            } else {
+                setStatus("status", "error");
+            }
         } finally {
             setLoading(false);
         }
@@ -140,26 +146,28 @@ const Status: React.FC<StatusProps> = ({ timeRange, domain }) => {
 
     useEffect(() => {
         setLoading(true);
+        setStatus("status", "loading");
         fetchData();
         const intervalId = setInterval(fetchData, 30000);
         return () => clearInterval(intervalId);
     }, [domain, timeRange]);
 
     if (loading) return <StatusPlug domain={domain} />;
-    if (error) return <div>Error: {error}</div>;
 
     return (
-        <div className={styles.statusContainer}>
-            {domains.map(
-                (d) =>
-                    (!domain || domain === d) && (
-                        <DomainStatus
-                            key={d}
-                            domain={d}
-                            logs={domainLogs[d] || []}
-                        />
-                    )
-            )}
+        <div>
+            <div className={styles.statusContainer}>
+                {domains.map(
+                    (d) =>
+                        (!domain || domain === d) && (
+                            <DomainStatus
+                                key={d}
+                                domain={d}
+                                logs={domainLogs[d] || []}
+                            />
+                        )
+                )}
+            </div>
         </div>
     );
 };

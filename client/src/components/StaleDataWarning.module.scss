@@ -1,0 +1,18 @@
+.staleDataWarning {
+    background-color: var(--color-yellow);
+    color: var(--color-dark-bg-1);
+    border-radius: var(--border-radius-md);
+    text-align: center;
+    margin: 15px 15px 0 15px;
+	font-size: 16px;
+    font-weight: 600;
+	height: 42px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.staleDataWarningError {
+    background-color: var(--color-red);
+    color: var(--color-white);
+}
