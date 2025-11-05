@@ -1,2 +1,91 @@
-@import "./styles/variables";
-@import "./styles/base";
+:root {
+    --color-primary: #ff6666;
+    --color-secondary: #6c757d;
+    --color-medium-bggray: #e0e0e0;
+
+    --color-button-bg: #555;
+    --color-button-hover-bg: #444;
+    --color-button-active-bg: #3d3d3d;
+
+    --color-green: #28a745;
+    --color-dark-green: #1e7e34;
+    --color-yellow: #ffc107;
+    --color-red: #dc3545;
+
+    --color-dark-bg-1: #333;
+    --color-dark-bg-2: #252525;
+    --color-bg: #222;
+
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+
+:root {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color: #fff;
+    background-color: var(--color-bg);
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    font-weight: 500;
+    color: var(--color-primary);
+    text-decoration: inherit;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+}
+
+h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+}
+
+p {
+    margin: 0;
+}
+
+button {
+    height: 38px;
+    padding: 0 15px;
+    border-radius: var(--border-radius-lg);
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: var(--color-button-bg);
+    cursor: pointer;
+    outline: none;
+    transition:
+        background-color 0.3s,
+        color 0.3s;
+    color: #fff;
+
+    &:hover {
+        background-color: var(--color-button-hover-bg);
+    }
+
+    &:active {
+        background-color: var(--color-button-active-bg);
+    }
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 1390px;
+    margin: 0 auto;
+}
