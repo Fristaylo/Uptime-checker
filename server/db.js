@@ -7,4 +7,32 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
 
+export const createHttpTable = async () => {
+    try {
+        const query = `
+    CREATE TABLE IF NOT EXISTS http_logs (
+      id SERIAL PRIMARY KEY,
+      probe_id VARCHAR(255),
+      domain VARCHAR(255),
+      country VARCHAR(2),
+      city VARCHAR(255),
+      asn INT,
+      network VARCHAR(255),
+      status_code INT,
+      total_time FLOAT,
+      download_time FLOAT,
+      first_byte_time FLOAT,
+      dns_time FLOAT,
+      tls_time FLOAT,
+      tcp_time FLOAT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+        await pool.query(query);
+        console.log('Table "http_logs" created or already exists.');
+    } catch (err) {
+        console.error("Error creating table", err);
+    }
+};
+
 export default pool;
