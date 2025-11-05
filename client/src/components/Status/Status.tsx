@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { domains } from "../data/constants";
-import DomainStatus from "./DomainStatus";
-import StatusPlug from "./StatusPlug";
+import { domains } from "../../data/constants.ts";
+import DomainStatus from "../DomainStatus/DomainStatus.tsx";
+import StatusPlug from "./StatusPlug.tsx";
 import styles from "./Status.module.scss";
-import { useDataStatus } from "../context/DataStatusContext";
+import { useDataStatus } from "../../context/DataStatusContext.tsx";
 
 interface Log {
     created_at: string;

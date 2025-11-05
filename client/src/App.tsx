@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
-import Footer from "./components/Footer";
-import Dashboard from "./components/Dashboard";
-import Header from "./components/Header";
-import StaleDataWarning from "./components/StaleDataWarning";
+import Footer from "./components/Footer/Footer.tsx";
+import Dashboard from "./components/Dashboard/Dashboard.tsx";
+import Header from "./components/Header/Header.tsx";
+import StaleDataWarning from "./components/StaleDataWarning/StaleDataWarning.tsx";
 import { useDataStatus } from "./context/DataStatusContext";
 
 function App() {

@@ -1,6 +1,6 @@
 import styles from "./StatusPlug.module.scss";
 
-import { domains } from "../data/constants";
+import { domains } from "../../data/constants.ts";
 
 interface StatusPlugProps {
     domain?: string;

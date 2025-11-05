@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import styles from "./Dashboard.module.scss";
-import CountryChart from "./CountryChart";
-import CountryChartPlug from "./CountryChartPlug";
+import CountryChart from "../CountryChart/CountryChart.tsx";
+import CountryChartPlug from "../CountryChart/CountryChartPlug.tsx";
 import ReactCountryFlag from "react-country-flag";
-import { countries, domains } from "../data/constants";
-import ButtonGroup from "./ButtonGroup";
-import Status from "./Status";
-import { useDataStatus } from "../context/DataStatusContext";
+import { countries, domains } from "../../data/constants.ts";
+import ButtonGroup from "../ButtonGroup/ButtonGroup.tsx";
+import Status from "../Status/Status.tsx";
+import { useDataStatus } from "../../context/DataStatusContext.tsx";
 
 interface Log {
     created_at: string;

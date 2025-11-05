@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./DomainDropdown.module.scss";
-import { domains } from "../data/constants";
+import { domains } from "../../data/constants.ts";
 
 const DomainDropdown: React.FC = () => {
     const navigate = useNavigate();

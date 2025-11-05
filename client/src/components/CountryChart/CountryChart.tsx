@@ -16,7 +16,7 @@ import {
 import "chartjs-adapter-date-fns";
 import { ru } from "date-fns/locale";
 import CrosshairPlugin from "chartjs-plugin-crosshair";
-import { cityTranslations } from "../data/constants";
+import { cityTranslations } from "../../data/constants.ts";
 
 ChartJS.register(
     LinearScale,

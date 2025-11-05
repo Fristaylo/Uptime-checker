@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom"; // Импортируем Link
 import styles from "./Footer.module.scss";
-import { domains } from "../data/constants";
+import { domains } from "../../data/constants.ts";
 
 const Footer: React.FC = () => {
     const currentYear = new Date().getFullYear();

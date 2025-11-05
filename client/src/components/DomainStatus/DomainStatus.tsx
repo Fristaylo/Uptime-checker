@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
-import useResize from "../hooks/useResize";
-import styles from "./Status.module.scss";
-import { cityTranslations } from "../data/constants";
+import useResize from "../../hooks/useResize.tsx";
+import styles from "../Status/Status.module.scss";
+import { cityTranslations } from "../../data/constants.ts";
 import ReactCountryFlag from "react-country-flag";
 
 interface GroupedLog {
