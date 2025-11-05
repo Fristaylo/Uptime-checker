@@ -21,3 +21,7 @@ lerna-debug.log*
 Thumbs.db
 
 *.env
+
+# IDE
+.vscode
+.kilocode
